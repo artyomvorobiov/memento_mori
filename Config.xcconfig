@@ -1,0 +1,11 @@
+// Общие настройки проекта Memento Mori.
+//
+// Перед первым запуском на iPhone замени значение BASE_BUNDLE_ID ниже на свой
+// уникальный идентификатор, например com.ivanpetrov.mementomori.
+// Проще всего — скриптом, он заодно поправит App Group в файлах .entitlements:
+//   ./scripts/set-bundle-id.sh com.ivanpetrov.mementomori
+//
+// Приложение получит этот bundle id, виджет — <bundle id>.widget,
+// общая папка приложения и виджета (App Group) — group.<bundle id>.
+
+BASE_BUNDLE_ID = com.yourname.mementomori

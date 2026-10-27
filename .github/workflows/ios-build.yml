@@ -1,0 +1,31 @@
+name: iOS build
+
+# Проверяет, что приложение и виджет собираются (симулятор, без подписи).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for iOS Simulator
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: |
+          xcodebuild -version
+          ls -d /Applications/Xcode*.app
+
+      - name: Build app and widget
+        run: |
+          xcodebuild build \
+            -project MementoMori.xcodeproj \
+            -scheme MementoMori \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
