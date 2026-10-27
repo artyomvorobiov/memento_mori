@@ -24,15 +24,18 @@ final class AppModel {
 
     private let store: DataStore
     private let scheduler = NotificationScheduler()
+    /// В демо-режиме не трогаем настоящие напоминания.
+    private let managesReminders: Bool
     @ObservationIgnored private var lastSeenModification: Date?
     @ObservationIgnored private var rescheduleTask: Task<Void, Never>?
 
-    init(store: DataStore? = nil) {
+    init(store: DataStore? = nil, managesReminders: Bool = true) {
         if store == nil {
             DataStore.migrateLocalDataIfNeeded()
         }
         let store = store ?? DataStore.shared
         self.store = store
+        self.managesReminders = managesReminders
         self.data = AppData()
         load()
     }
@@ -44,7 +47,7 @@ final class AppModel {
             let directory = FileManager.default.temporaryDirectory.appendingPathComponent("MementoDemo", isDirectory: true)
             let store = DataStore(directory: directory)
             try? store.save(DemoData.make())
-            return AppModel(store: store)
+            return AppModel(store: store, managesReminders: false)
         }
         return AppModel()
     }
@@ -342,6 +345,7 @@ final class AppModel {
     }
 
     private func scheduleReminders() {
+        guard managesReminders else { return }
         rescheduleTask?.cancel()
         let snapshot = data
         let scheduler = scheduler

@@ -29,3 +29,14 @@ jobs:
             -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             -quiet
+
+      - name: Check build products
+        run: |
+          APP="build/DerivedData/Build/Products/Debug-iphonesimulator/MementoMori.app"
+          WIDGET="$APP/PlugIns/MementoWidgetExtension.appex"
+          ls -la "$APP" "$WIDGET"
+          # В сборке должен быть код приложения и виджета, а не пустые оболочки.
+          grep -rlq "MEMENTO MORI" "$APP" --exclude-dir=PlugIns || { echo "Нет кода приложения"; exit 1; }
+          grep -rlq "MEMENTO MORI" "$WIDGET" || { echo "Нет кода виджета"; exit 1; }
+          test -d "$APP/Metadata.appintents" || test -d "$WIDGET/Metadata.appintents" || echo "Внимание: нет метаданных App Intents"
+          echo "Приложение и виджет собраны"
