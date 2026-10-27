@@ -2,7 +2,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppModel.self) private var model
-    @State private var step = 0
+    @State private var step = DebugLaunch.onboardingStep
     @State private var birthDate = Calendar.memento.date(byAdding: .year, value: -30, to: Date()) ?? Date()
     @State private var lifeExpectancy = Profile.defaultLifeExpectancy
     @State private var selectedIdeas: Set<String> = []

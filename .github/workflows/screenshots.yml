@@ -1,0 +1,38 @@
+name: Screenshots
+
+# Запускается вручную: Actions → Screenshots → Run workflow.
+# Снимает скриншоты в симуляторе и сохраняет их в docs/screenshots той же ветки.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    name: Simulator screenshots
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and take screenshots
+        run: ./scripts/take-screenshots.sh docs/screenshots
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots
+
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          if git diff --cached --quiet; then
+            echo "Скриншоты не изменились"
+            exit 0
+          fi
+          git commit -m "Update screenshots"
+          git push

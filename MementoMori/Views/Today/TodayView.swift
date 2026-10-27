@@ -27,6 +27,7 @@ struct TodayView: View {
                     }
                 }
             }
+            .defaultScrollAnchor(DebugLaunch.scrollToBottom ? .bottom : .top)
             .background(Theme.background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -20,7 +20,7 @@ final class AppModel {
     /// Файл данных есть, но прочитать его сейчас нельзя — ничего не записываем.
     private(set) var storageUnavailable = false
     /// Сообщение о проблеме с данными, которое нужно показать пользователю.
-    var dataProblem: String?
+    var dataProblem: String? = nil
 
     private let store: DataStore
     private let scheduler = NotificationScheduler()
@@ -35,6 +35,18 @@ final class AppModel {
         self.store = store
         self.data = AppData()
         load()
+    }
+
+    /// Модель для запуска приложения. В отладочной сборке аргумент `-MementoDemo`
+    /// подставляет демонстрационные данные во временную папку — настоящие не трогаются.
+    static func makeForLaunch() -> AppModel {
+        if DebugLaunch.isDemo {
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent("MementoDemo", isDirectory: true)
+            let store = DataStore(directory: directory)
+            try? store.save(DemoData.make())
+            return AppModel(store: store)
+        }
+        return AppModel()
     }
 
     // MARK: - Чтение

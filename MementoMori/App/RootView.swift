@@ -6,7 +6,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if model.storageUnavailable {
+            if let page = DebugLaunch.widgetGalleryPage {
+                WidgetGalleryView(page: page)
+            } else if model.storageUnavailable {
                 StorageUnavailableView()
             } else if model.profile == nil {
                 OnboardingView()
@@ -38,7 +40,7 @@ struct RootView: View {
 
 struct MainTabView: View {
     @Environment(AppModel.self) private var model
-    @SceneStorage("selectedTab") private var selectedTab = 0
+    @AppStorage("selectedTab") private var selectedTab = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {

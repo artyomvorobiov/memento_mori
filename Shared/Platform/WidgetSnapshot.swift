@@ -45,17 +45,9 @@ struct WidgetSnapshot {
         return dates
     }
 
-    /// Пример для галереи виджетов.
+    /// Пример для галереи виджетов и отладочных превью.
     static var sample: WidgetSnapshot {
-        let birthDate = Calendar.memento.date(byAdding: .year, value: -31, to: Date()) ?? Date()
-        return WidgetSnapshot(
-            profile: Profile(birthDate: birthDate, lifeExpectancy: 80),
-            goals: [
-                Goal(title: "Увидеть северное сияние", category: .travel, targetAge: 35, isFocused: true),
-                Goal(title: "Выучить испанский", category: .skills, isFocused: true),
-                Goal(title: "Пробежать марафон", category: .body, isFocused: true),
-                Goal(title: "«Сталкер» — Андрей Тарковский", category: .movies, completedAt: Date()),
-            ]
-        )
+        let data = DemoData.make()
+        return WidgetSnapshot(profile: data.profile, goals: data.goals)
     }
 }
