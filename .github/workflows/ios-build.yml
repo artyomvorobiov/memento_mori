@@ -40,3 +40,14 @@ jobs:
           grep -rlq "MEMENTO MORI" "$WIDGET" || { echo "Нет кода виджета"; exit 1; }
           test -d "$APP/Metadata.appintents" || test -d "$WIDGET/Metadata.appintents" || echo "Внимание: нет метаданных App Intents"
           echo "Приложение и виджет собраны"
+
+      - name: Build Release for device (no signing)
+        run: |
+          xcodebuild build \
+            -project MementoMori.xcodeproj \
+            -scheme MementoMori \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedDataDevice \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet

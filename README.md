@@ -4,6 +4,19 @@
 
 Минималистичное (чёрный фон, белый текст, один тёплый акцент), полностью офлайн, без аккаунтов и рекламы. iOS 17+, SwiftUI, виджеты WidgetKit.
 
+<p align="center">
+  <img src="docs/screenshots/03-today.png" width="250" alt="Сегодня: сколько недель осталось">
+  <img src="docs/screenshots/06-life-weeks.png" width="250" alt="Жизнь в неделях с отметками целей">
+  <img src="docs/screenshots/05-goals.png" width="250" alt="Список целей">
+</p>
+<p align="center">
+  <img src="docs/screenshots/04-today-more.png" width="250" alt="Осталось примерно и темп">
+  <img src="docs/screenshots/08-widgets.png" width="250" alt="Виджеты главного экрана">
+  <img src="docs/screenshots/09-widgets-more.png" width="250" alt="Большой виджет и виджеты экрана блокировки">
+</p>
+
+<sub>Скриншоты сняты в симуляторе на демонстрационных данных — см. раздел «Демо-режим и скриншоты».</sub>
+
 ---
 
 ## Что умеет
