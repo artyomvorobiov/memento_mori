@@ -162,7 +162,7 @@ struct LifeProgressSummary: View {
             HStack {
                 Text("\(Format.percent(stats.progress)) прожито")
                 Spacer()
-                Text("\(stats.ageYears) из \(Format.years(stats.lifeExpectancy))")
+                Text("\(stats.ageYears) из \(Format.genitive(stats.lifeExpectancy, "года", "лет"))")
             }
             .font(.caption)
             .monospacedDigit()
@@ -278,23 +278,23 @@ struct RemainingSection: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 CounterTile(
                     emoji: "🌅",
-                    value: stats.remainingDays,
+                    value: Format.number(stats.remainingDays),
                     caption: RussianPlural.form(stats.remainingDays, "рассвет", "рассвета", "рассветов")
                 )
                 CounterTile(
-                    emoji: "☀️",
-                    value: stats.summersLeft,
-                    caption: RussianPlural.form(stats.summersLeft, "лето", "лета", "лет")
+                    emoji: "🌕",
+                    value: Format.number(stats.fullMoonsLeft),
+                    caption: RussianPlural.form(stats.fullMoonsLeft, "полнолуние", "полнолуния", "полнолуний")
                 )
                 CounterTile(
                     emoji: "🎄",
-                    value: stats.newYearsLeft,
+                    value: Format.number(stats.newYearsLeft),
                     caption: RussianPlural.form(stats.newYearsLeft, "Новый год", "Новых года", "Новых годов")
                 )
                 CounterTile(
-                    emoji: "🌕",
-                    value: stats.fullMoonsLeft,
-                    caption: RussianPlural.form(stats.fullMoonsLeft, "полнолуние", "полнолуния", "полнолуний")
+                    emoji: "🫀",
+                    value: Format.compact(stats.heartbeatsLeft),
+                    caption: "ударов сердца"
                 )
                 ForEach(model.data.counters) { counter in
                     Button {
@@ -302,7 +302,7 @@ struct RemainingSection: View {
                     } label: {
                         CounterTile(
                             emoji: counter.emoji,
-                            value: counter.remaining(remainingYears: stats.remainingYears),
+                            value: Format.number(counter.remaining(remainingYears: stats.remainingYears)),
                             caption: counter.title
                         )
                     }
@@ -338,14 +338,14 @@ struct RemainingSection: View {
 
 struct CounterTile: View {
     let emoji: String
-    let value: Int
+    let value: String
     let caption: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(emoji)
                 .font(.title3)
-            Text(Format.number(value))
+            Text(value)
                 .font(.system(size: 28, weight: .light))
                 .monospacedDigit()
                 .foregroundStyle(Color.white)

@@ -49,6 +49,24 @@ enum Format {
     static func goals(_ value: Int) -> String { count(value, "цель", "цели", "целей") }
     static func times(_ value: Int) -> String { count(value, "раз", "раза", "раз") }
 
+    /// Родительный падеж после «из»: «из 82 лет», «из 81 года», «из 4 278 недель».
+    static func genitive(_ value: Int, _ singular: String, _ plural: String) -> String {
+        let n = abs(value)
+        let word = n % 10 == 1 && n % 100 != 11 ? singular : plural
+        return "\(number(value)) \(word)"
+    }
+
+    /// Крупные числа покороче: «1,6 млрд», «418,5 млн».
+    static func compact(_ value: Double) -> String {
+        if value >= 1_000_000_000 {
+            return decimal(value / 1_000_000_000) + " млрд"
+        }
+        if value >= 1_000_000 {
+            return decimal(value / 1_000_000) + " млн"
+        }
+        return number(Int(value))
+    }
+
     /// «к 35 годам», «к 21 году».
     static func byAge(_ age: Int) -> String {
         "к \(age) " + RussianPlural.form(age, "году", "годам", "годам")

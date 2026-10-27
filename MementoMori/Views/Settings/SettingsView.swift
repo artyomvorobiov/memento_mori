@@ -175,7 +175,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         Section {
             LabeledContent("Версия", value: appVersion)
-            Text("Memento mori — «помни, что смертен». Древние стоики повторяли это не из страха, а чтобы не откладывать жизнь на потом.")
+            Text("Memento mori — «помни о смерти». Древние стоики повторяли это не из страха, а чтобы не откладывать жизнь на потом.")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondaryText)
         } header: {

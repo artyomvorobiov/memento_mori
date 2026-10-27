@@ -54,8 +54,13 @@ if [ -z "$UDID" ]; then
   exit 1
 fi
 
-xcrun simctl boot "$UDID" 2>/dev/null || true
-xcrun simctl bootstatus "$UDID" -b > /dev/null
+if ! xcrun simctl list devices booted | grep -q "$UDID"; then
+  xcrun simctl boot "$UDID"
+  xcrun simctl bootstatus "$UDID" -b > /dev/null
+  # Свежий симулятор первые минуты показывает системные баннеры — ждём, пока успокоится.
+  echo "Жду ${SETTLE_SECONDS:-75} с, пока симулятор загрузится полностью…"
+  sleep "${SETTLE_SECONDS:-75}"
+fi
 xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
 xcrun simctl uninstall "$UDID" "$BUNDLE_ID" 2>/dev/null || true
 xcrun simctl install "$UDID" "$APP"

@@ -72,6 +72,8 @@ struct LifeStats {
     var newYearsLeft: Int { occurrencesLeft(month: 1, day: 1) }
     var birthdaysLeft: Int { max(0, lifeExpectancy - ageYears) }
     var fullMoonsLeft: Int { Int(Double(remainingDays) / Self.daysPerLunarMonth) }
+    /// Ударов сердца при среднем пульсе 70 в минуту.
+    var heartbeatsLeft: Double { remainingSeconds / 60 * 70 }
 
     /// Сколько раз дата «день.месяц» встретится в промежутке (сейчас; конец].
     func occurrencesLeft(month: Int, day: Int) -> Int {

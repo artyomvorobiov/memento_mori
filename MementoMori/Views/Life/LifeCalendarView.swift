@@ -84,7 +84,7 @@ struct LifeCalendarView: View {
         VStack(alignment: .leading, spacing: 6) {
             switch mode {
             case .weeks:
-                Text("Прожито \(Format.number(stats.livedWeeks)) из \(Format.weeks(stats.totalWeeks))")
+                Text("Прожито \(Format.number(stats.livedWeeks)) из \(Format.genitive(stats.totalWeeks, "недели", "недель"))")
                     .font(.headline)
                 Text("Каждая клетка — неделя, строка — год жизни. Нажми на клетку, чтобы увидеть её даты и цели.")
                     .font(.footnote)

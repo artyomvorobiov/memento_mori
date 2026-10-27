@@ -37,7 +37,7 @@ struct OnboardingView: View {
                 .font(.system(size: 52, weight: .ultraLight))
                 .tracking(6)
                 .lineSpacing(4)
-            Text("Помни, что ты смертен.")
+            Text("Помни о смерти.")
                 .font(.system(.title2, design: .serif))
                 .italic()
             Text("Не чтобы бояться, а чтобы жить. Собери всё, что хочешь успеть, — и смотри, сколько у тебя осталось времени.")
