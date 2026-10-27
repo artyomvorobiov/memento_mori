@@ -5,7 +5,7 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var birthDate = Date()
-    @State private var lifeExpectancy = Profile.defaultLifeExpectancy
+    @State private var expectancy = ExpectancyChoice.suggested()
     @State private var reminders = ReminderSettings()
     @State private var notificationsDenied = false
     @State private var isLoaded = false
@@ -35,7 +35,7 @@ struct SettingsView: View {
             }
             .onAppear(perform: loadState)
             .onChange(of: birthDate) { _, _ in saveProfile() }
-            .onChange(of: lifeExpectancy) { _, _ in saveProfile() }
+            .onChange(of: expectancy) { _, _ in saveProfile() }
             .onChange(of: reminders) { _, newValue in
                 guard isLoaded else { return }
                 model.updateReminders(newValue)
@@ -83,20 +83,57 @@ struct SettingsView: View {
     private var profileSection: some View {
         Section {
             DatePicker("Дата рождения", selection: $birthDate, in: birthDateRange, displayedComponents: .date)
-            Stepper(value: $lifeExpectancy, in: Profile.lifeExpectancyRange) {
-                HStack {
-                    Text("Ожидаемая жизнь")
-                    Spacer()
-                    Text(Format.years(lifeExpectancy))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.secondaryText)
+            Picker("Продолжительность жизни", selection: $expectancy.source) {
+                ForEach(ExpectancySource.allCases) { source in
+                    Text(source.title).tag(source)
+                }
+            }
+            .pickerStyle(.segmented)
+            switch expectancy.source {
+            case .country:
+                NavigationLink {
+                    ExpectancyCountryList(selection: expectancyCountryBinding)
+                } label: {
+                    HStack {
+                        Text("Страна")
+                        Spacer()
+                        Text(ExpectancyCountryList.label(for: expectancy.country))
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                LabeledContent("Средняя продолжительность", value: Format.years(expectancy.years))
+            case .custom:
+                Stepper(value: $expectancy.customYears, in: Profile.lifeExpectancyRange) {
+                    HStack {
+                        Text("Ожидаемая жизнь")
+                        Spacer()
+                        Text(Format.years(expectancy.customYears))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.secondaryText)
+                    }
                 }
             }
         } header: {
             Text("Ты")
         } footer: {
-            Text("В среднем по миру люди живут около 73 лет. Это не прогноз, а точка отсчёта — выбери число, которое тебя мотивирует.")
+            Text(profileFooter)
         }
+    }
+
+    private var profileFooter: String {
+        switch expectancy.source {
+        case .country:
+            return "Средняя продолжительность жизни при рождении. \(LifeExpectancyData.attribution)"
+        case .custom:
+            return "В среднем по миру люди живут около 73 лет. Это не прогноз, а точка отсчёта — выбери число, которое тебя мотивирует."
+        }
+    }
+
+    private var expectancyCountryBinding: Binding<String> {
+        Binding(
+            get: { expectancy.country },
+            set: { expectancy.select(country: $0) }
+        )
     }
 
     private var remindersSection: some View {
@@ -237,7 +274,7 @@ struct SettingsView: View {
         isLoaded = false
         if let profile = model.profile {
             birthDate = profile.birthDate
-            lifeExpectancy = profile.lifeExpectancy
+            expectancy = ExpectancyChoice(profile: profile)
         }
         reminders = model.data.reminders
         Task {
@@ -252,8 +289,12 @@ struct SettingsView: View {
     private func saveProfile() {
         guard isLoaded, let profile = model.profile else { return }
         let normalized = Calendar.memento.startOfDay(for: birthDate)
-        guard normalized != profile.birthDate || lifeExpectancy != profile.lifeExpectancy else { return }
-        model.updateProfile(birthDate: birthDate, lifeExpectancy: lifeExpectancy)
+        let unchanged = normalized == profile.birthDate
+            && expectancy.source == profile.expectancySource
+            && expectancy.years == profile.lifeExpectancy
+            && expectancy.country == profile.expectancyCountry
+        guard !unchanged else { return }
+        model.updateProfile(birthDate: birthDate, expectancy: expectancy)
     }
 
     private func exportData() {

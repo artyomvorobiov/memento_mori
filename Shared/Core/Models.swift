@@ -139,31 +139,127 @@ struct Goal: Identifiable, Codable, Hashable {
 
 // MARK: - Профиль
 
+/// Откуда берётся ожидаемая продолжительность жизни.
+enum ExpectancySource: String, Codable, CaseIterable, Identifiable {
+    /// Средняя по стране (данные Всемирного банка).
+    case country
+    /// Своё число.
+    case custom
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .country: "Средняя по стране"
+        case .custom: "Своё число"
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = ExpectancySource(rawValue: raw) ?? .custom
+    }
+}
+
 struct Profile: Codable, Hashable {
     var birthDate: Date
-    /// Ожидаемая продолжительность жизни в годах.
+    /// Ожидаемая продолжительность жизни в годах — по ней считается всё остальное.
     var lifeExpectancy: Int
+    var expectancySource: ExpectancySource
+    /// Страна для режима «средняя по стране» (ISO-код или 001 — весь мир).
+    var expectancyCountry: String?
     /// Когда человек начал пользоваться приложением (нужно для расчёта темпа).
     var createdAt: Date
 
     static let defaultLifeExpectancy = 80
     static let lifeExpectancyRange = 30...120
 
-    init(birthDate: Date, lifeExpectancy: Int = Profile.defaultLifeExpectancy, createdAt: Date = Date()) {
+    init(
+        birthDate: Date,
+        lifeExpectancy: Int = Profile.defaultLifeExpectancy,
+        expectancySource: ExpectancySource = .custom,
+        expectancyCountry: String? = nil,
+        createdAt: Date = Date()
+    ) {
         self.birthDate = birthDate
         self.lifeExpectancy = lifeExpectancy
+        self.expectancySource = expectancySource
+        self.expectancyCountry = expectancyCountry
         self.createdAt = createdAt
+        applyCountryAverage()
+    }
+
+    /// Средняя продолжительность жизни в стране, округлённая до лет.
+    static func averageLifeExpectancy(forCountry code: String) -> Int? {
+        LifeExpectancyData.value(for: code).map { Int($0.rounded()) }
+    }
+
+    /// В режиме «средняя по стране» подставляет актуальное значение из данных.
+    mutating func applyCountryAverage() {
+        guard expectancySource == .country,
+              let code = expectancyCountry,
+              let years = Profile.averageLifeExpectancy(forCountry: code)
+        else { return }
+        lifeExpectancy = years
     }
 
     enum CodingKeys: String, CodingKey {
-        case birthDate, lifeExpectancy, createdAt
+        case birthDate, lifeExpectancy, expectancySource, expectancyCountry, createdAt
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         birthDate = try c.decode(Date.self, forKey: .birthDate)
         lifeExpectancy = try c.decodeIfPresent(Int.self, forKey: .lifeExpectancy) ?? Profile.defaultLifeExpectancy
+        expectancySource = try c.decodeIfPresent(ExpectancySource.self, forKey: .expectancySource) ?? .custom
+        expectancyCountry = try c.decodeIfPresent(String.self, forKey: .expectancyCountry)
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        applyCountryAverage()
+    }
+}
+
+/// Выбор ожидаемой продолжительности жизни на экранах знакомства и настроек.
+struct ExpectancyChoice: Equatable {
+    var source: ExpectancySource
+    /// Страна для режима «средняя по стране» (ISO-код или 001 — весь мир).
+    var country: String
+    /// Своё число для режима «своё число».
+    var customYears: Int
+
+    /// Сколько лет в итоге закладываем на жизнь.
+    var years: Int {
+        if source == .country, let average = Profile.averageLifeExpectancy(forCountry: country) {
+            return average
+        }
+        return customYears
+    }
+
+    /// Средняя по стране, где живёт человек (по региону устройства), или по миру.
+    static func suggested(regionCode: String? = Locale.current.region?.identifier) -> ExpectancyChoice {
+        let country = regionCode.flatMap { LifeExpectancyData.hasData(for: $0) ? $0 : nil } ?? LifeExpectancyData.worldCode
+        let average = Profile.averageLifeExpectancy(forCountry: country) ?? Profile.defaultLifeExpectancy
+        return ExpectancyChoice(source: .country, country: country, customYears: average)
+    }
+
+    /// Выбрать страну: своё число тоже подстраиваем, чтобы при переключении начинать от средней.
+    mutating func select(country code: String) {
+        country = code
+        if let average = Profile.averageLifeExpectancy(forCountry: code) {
+            customYears = average
+        }
+    }
+
+    init(source: ExpectancySource, country: String, customYears: Int) {
+        self.source = source
+        self.country = country
+        self.customYears = customYears
+    }
+
+    init(profile: Profile) {
+        let fallback = ExpectancyChoice.suggested()
+        source = profile.expectancySource
+        country = profile.expectancyCountry.flatMap { LifeExpectancyData.hasData(for: $0) ? $0 : nil } ?? fallback.country
+        customYears = profile.lifeExpectancy
     }
 }
 

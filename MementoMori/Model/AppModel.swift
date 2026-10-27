@@ -111,11 +111,13 @@ final class AppModel {
 
     // MARK: - Онбординг и профиль
 
-    func completeOnboarding(birthDate: Date, lifeExpectancy: Int, ideas: [Idea], remindersEnabled: Bool) {
+    func completeOnboarding(birthDate: Date, expectancy: ExpectancyChoice, ideas: [Idea], remindersEnabled: Bool) {
         update { data in
             data.profile = Profile(
                 birthDate: Calendar.memento.startOfDay(for: birthDate),
-                lifeExpectancy: lifeExpectancy,
+                lifeExpectancy: expectancy.years,
+                expectancySource: expectancy.source,
+                expectancyCountry: expectancy.country,
                 createdAt: Date()
             )
             for idea in ideas {
@@ -136,10 +138,12 @@ final class AppModel {
         }
     }
 
-    func updateProfile(birthDate: Date, lifeExpectancy: Int) {
+    func updateProfile(birthDate: Date, expectancy: ExpectancyChoice) {
         update { data in
             data.profile?.birthDate = Calendar.memento.startOfDay(for: birthDate)
-            data.profile?.lifeExpectancy = lifeExpectancy
+            data.profile?.lifeExpectancy = expectancy.years
+            data.profile?.expectancySource = expectancy.source
+            data.profile?.expectancyCountry = expectancy.country
         }
     }
 

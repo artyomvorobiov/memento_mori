@@ -4,7 +4,8 @@ struct OnboardingView: View {
     @Environment(AppModel.self) private var model
     @State private var step = DebugLaunch.onboardingStep
     @State private var birthDate = Calendar.memento.date(byAdding: .year, value: -30, to: Date()) ?? Date()
-    @State private var lifeExpectancy = Profile.defaultLifeExpectancy
+    @State private var expectancy = ExpectancyChoice.suggested()
+    @State private var showCountryPicker = false
     @State private var selectedIdeas: Set<String> = []
     @State private var remindersEnabled = true
 
@@ -51,7 +52,7 @@ struct OnboardingView: View {
     }
 
     private var lifeStep: some View {
-        let stats = LifeStats(birthDate: birthDate, lifeExpectancy: lifeExpectancy)
+        let stats = LifeStats(birthDate: birthDate, lifeExpectancy: expectancy.years)
         return ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Дата твоего рождения")
@@ -61,18 +62,7 @@ struct OnboardingView: View {
                     .labelsHidden()
                     .frame(maxWidth: .infinity)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Сколько лет ты планируешь прожить?")
-                        .font(.headline)
-                    Stepper(value: $lifeExpectancy, in: Profile.lifeExpectancyRange) {
-                        Text(Format.years(lifeExpectancy))
-                            .font(.title3)
-                            .monospacedDigit()
-                    }
-                    Text("В среднем по миру люди живут около 73 лет. Можно взять с запасом — это легко поменять позже.")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.secondaryText)
-                }
+                expectancySection(age: stats.ageYears)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(Format.number(stats.remainingWeeks))
@@ -87,6 +77,80 @@ struct OnboardingView: View {
             .padding(.horizontal, 28)
             .padding(.top, 32)
         }
+        .sheet(isPresented: $showCountryPicker) {
+            NavigationStack {
+                ExpectancyCountryList(selection: countryBinding)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Отмена") { showCountryPicker = false }
+                        }
+                    }
+            }
+        }
+    }
+
+    private func expectancySection(age: Int) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Сколько лет закладываем на жизнь?")
+                .font(.headline)
+            Picker("Продолжительность жизни", selection: $expectancy.source) {
+                ForEach(ExpectancySource.allCases) { source in
+                    Text(source.title).tag(source)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            switch expectancy.source {
+            case .country:
+                Button {
+                    showCountryPicker = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(ExpectancyCountryList.label(for: expectancy.country))
+                            .foregroundStyle(Color.white)
+                        Spacer()
+                        Text(Format.years(expectancy.years))
+                            .font(.title3)
+                            .monospacedDigit()
+                            .foregroundStyle(Color.white)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.tertiaryText)
+                    }
+                    .padding(14)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                Text(countryHint(age: age))
+                    .font(.footnote)
+                    .foregroundStyle(age >= expectancy.years - 2 ? Theme.accent : Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            case .custom:
+                Stepper(value: $expectancy.customYears, in: Profile.lifeExpectancyRange) {
+                    Text(Format.years(expectancy.customYears))
+                        .font(.title3)
+                        .monospacedDigit()
+                }
+                Text("В среднем по миру люди живут около 73 лет. Можно взять с запасом — это легко поменять позже.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func countryHint(age: Int) -> String {
+        if age >= expectancy.years - 2 {
+            return "Средняя по стране уже почти позади — и это хорошо: кто прожил дольше, обычно и живёт дольше среднего. Лучше укажи своё число."
+        }
+        return "Средняя продолжительность жизни в стране по данным Всемирного банка за 2023 год — без расчётов и гаданий. Поменять можно в любой момент."
+    }
+
+    private var countryBinding: Binding<String> {
+        Binding(
+            get: { expectancy.country },
+            set: { expectancy.select(country: $0) }
+        )
     }
 
     private var goalsStep: some View {
@@ -193,7 +257,7 @@ struct OnboardingView: View {
         let ideas = IdeaLibrary.starter.filter { selectedIdeas.contains($0.id) }
         model.completeOnboarding(
             birthDate: birthDate,
-            lifeExpectancy: lifeExpectancy,
+            expectancy: expectancy,
             ideas: ideas,
             remindersEnabled: remindersEnabled
         )

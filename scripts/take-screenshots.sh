@@ -77,7 +77,7 @@ shot() {
 
 echo "Снимаю:"
 DELAY=15 shot 01-onboarding
-shot 02-onboarding-life -MementoOnboardingStep 1
+shot 02-onboarding-life -MementoOnboardingStep 1 -AppleLocale ru_RU
 shot 03-today -MementoDemo -selectedTab 0
 shot 04-today-more -MementoDemo -selectedTab 0 -MementoScrollToBottom YES
 shot 05-goals -MementoDemo -selectedTab 1
