@@ -103,19 +103,25 @@ enum Format {
     static func relative(from now: Date, to date: Date, calendar: Calendar = .memento) -> String {
         let seconds = date.timeIntervalSince(now)
         if seconds < 0 { return "срок прошёл" }
-        let days = Int(seconds / LifeStats.secondsPerDay)
-        if days == 0 { return "сегодня" }
+        // Считаем по календарным дням: «через год» от сегодняшнего утра — это ровно год, а не 11 месяцев.
+        let start = calendar.startOfDay(for: now)
+        let end = calendar.startOfDay(for: date)
+        let days = calendar.dateComponents([.day], from: start, to: end).day ?? Int(seconds / LifeStats.secondsPerDay)
+        if days <= 0 { return "сегодня" }
+        if days == 1 { return "завтра" }
         if days < 14 {
             return "через " + count(days, "день", "дня", "дней")
         }
         if days < 70 {
             return "через " + count(days / 7, "неделю", "недели", "недель")
         }
-        let months = calendar.dateComponents([.month], from: now, to: date).month ?? days / 30
+        let months = calendar.dateComponents([.month], from: start, to: end).month ?? days / 30
+        if months == 12 { return "через год" }
         if months < 24 {
             return "через " + count(max(1, months), "месяц", "месяца", "месяцев")
         }
-        return "через " + years(Int(seconds / LifeStats.secondsPerYear))
+        let yearCount = calendar.dateComponents([.year], from: start, to: end).year ?? Int(seconds / LifeStats.secondsPerYear)
+        return "через " + years(yearCount)
     }
 }
 

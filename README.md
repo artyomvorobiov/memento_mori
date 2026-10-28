@@ -10,9 +10,19 @@
   <img src="docs/screenshots/05-goals.png" width="250" alt="Список целей">
 </p>
 <p align="center">
-  <img src="docs/screenshots/04-today-more.png" width="250" alt="Осталось примерно и темп">
+  <img src="docs/screenshots/04-today-more.png" width="250" alt="Осталось примерно: счётчики с кнопкой «Было»">
+  <img src="docs/screenshots/13-counter.png" width="250" alt="Последний раз: история и фактический темп">
+  <img src="docs/screenshots/14-letters.png" width="250" alt="Письма в будущее">
+</p>
+<p align="center">
+  <img src="docs/screenshots/10-world.png" width="250" alt="Карта путешествий">
+  <img src="docs/screenshots/17-photo-import.png" width="250" alt="Страны из фото">
+  <img src="docs/screenshots/18-widgets-last-time.png" width="250" alt="Виджеты «Последний раз» и «Письмо себе»">
+</p>
+<p align="center">
   <img src="docs/screenshots/08-widgets.png" width="250" alt="Виджеты главного экрана">
   <img src="docs/screenshots/09-widgets-more.png" width="250" alt="Большой виджет и виджеты экрана блокировки">
+  <img src="docs/screenshots/11-widgets-travel.png" width="250" alt="Виджет «Мой мир»">
 </p>
 
 <sub>Скриншоты сняты в симуляторе на демонстрационных данных — см. раздел «Демо-режим и скриншоты».</sub>

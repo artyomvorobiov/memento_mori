@@ -278,7 +278,7 @@ struct LetterView: View {
             envelope(
                 icon: "envelope.fill",
                 title: "Запечатано до \(Format.date(unlock))",
-                subtitle: "Написано \(Format.date(letter.createdAt)). Откроется \(Format.relative(from: now, to: unlock)).",
+                subtitle: "Написано \(Format.date(letter.createdAt)), откроется \(Format.relative(from: now, to: unlock)).",
                 detail: "До этого дня его не прочитать — в этом и смысл."
             ) {
                 Button("Открыть досрочно") {
@@ -289,7 +289,7 @@ struct LetterView: View {
                     Button("Открыть сейчас", action: open)
                     Button("Подождать", role: .cancel) {}
                 } message: {
-                    Text("Письмо задумано на \(Format.date(unlock)). Иногда ждать — часть удовольствия.")
+                    Text("Письмо задумано на \(Format.date(unlock)) — иногда ждать тоже часть удовольствия.")
                 }
             }
         }
@@ -462,7 +462,7 @@ struct LetterRow: View {
                 Text(subtitle(unlock: unlock))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
@@ -507,7 +507,7 @@ struct LetterArrivedCard: View {
                     Text("Пришло письмо из прошлого")
                         .font(.system(.headline, design: .serif))
                         .foregroundStyle(Color.white)
-                    Text("Написано \(Format.date(letter.createdAt)). Открой, когда будет минутка.")
+                    Text("Написано \(Format.date(letter.createdAt)) — открой, когда будет минутка.")
                         .font(.caption)
                         .foregroundStyle(Theme.secondaryText)
                         .multilineTextAlignment(.leading)
