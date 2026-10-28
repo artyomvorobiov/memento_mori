@@ -10,6 +10,8 @@ struct WorldMapData {
     let other: Path
     /// Маленькие страны дополнительно рисуются точкой, чтобы их было видно и можно было нажать.
     let dots: [String: CGPoint]
+    /// Прямоугольник основной территории: у России без Чукотки за 180-м меридианом, у США без Алеут.
+    let mainBounds: [String: CGRect]
 
     static let shared = WorldMapData.load()
 
@@ -26,8 +28,11 @@ struct WorldMapData {
         return countries.first { $0.value.contains(point) }?.key
     }
 
-    /// Прямоугольник страны на карте.
+    /// Прямоугольник страны на карте (по основной территории).
     func bounds(of code: String) -> CGRect? {
+        if let rect = mainBounds[code], rect.width > 1 || rect.height > 1 {
+            return rect
+        }
         if let path = countries[code] {
             let rect = path.boundingRect
             if rect.width > 1 || rect.height > 1 { return rect }
@@ -49,14 +54,18 @@ struct WorldMapData {
     }
 
     private static func load() -> WorldMapData {
-        let empty = WorldMapData(size: CGSize(width: 2000, height: 872), countries: [:], other: Path(), dots: [:])
+        let empty = WorldMapData(size: CGSize(width: 2000, height: 872), countries: [:], other: Path(), dots: [:], mainBounds: [:])
         guard let url = Bundle.main.url(forResource: "world-map", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let raw = try? JSONDecoder().decode(RawMap.self, from: data)
         else { return empty }
         var countries: [String: Path] = [:]
+        var mainBounds: [String: CGRect] = [:]
         for (code, rings) in raw.countries {
             countries[code] = path(from: rings)
+            mainBounds[code] = rings
+                .map { path(from: [$0]).boundingRect }
+                .max { $0.width * $0.height < $1.width * $1.height }
         }
         var dots: [String: CGPoint] = [:]
         for (code, point) in raw.dots where point.count == 2 {
@@ -66,7 +75,8 @@ struct WorldMapData {
             size: CGSize(width: raw.width, height: raw.height),
             countries: countries,
             other: path(from: raw.other),
-            dots: dots
+            dots: dots,
+            mainBounds: mainBounds
         )
     }
 
