@@ -5,6 +5,7 @@ struct TodayView: View {
     @State private var showSettings = false
     @State private var showShareCard = false
     @State private var completingGoal: Goal?
+    @State private var openedLetter: LetterSelection?
 
     var body: some View {
         NavigationStack {
@@ -15,6 +16,11 @@ struct TodayView: View {
                             VStack(alignment: .leading, spacing: 16) {
                                 HeroCountdown(stats: stats)
                                 LifeProgressSummary(stats: stats)
+                            }
+                            if let letter = model.waitingLetters(at: context.date).first {
+                                LetterArrivedCard(letter: letter) {
+                                    openedLetter = LetterSelection(id: letter.id)
+                                }
                             }
                             QuoteCard(date: context.date)
                             FocusSection(completingGoal: $completingGoal)
@@ -65,6 +71,9 @@ struct TodayView: View {
             }
             .sheet(item: $completingGoal) { goal in
                 CompleteGoalSheet(goal: goal)
+            }
+            .sheet(item: $openedLetter) { selection in
+                LetterView(letterID: selection.id)
             }
         }
     }
@@ -273,8 +282,9 @@ struct FocusSection: View {
 struct RemainingSection: View {
     let stats: LifeStats
     @Environment(AppModel.self) private var model
-    @State private var editingCounter: LifeCounter?
+    @State private var openedCounter: CounterSelection?
     @State private var isAddingCounter = false
+    @State private var loggedCount = 0
 
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -303,16 +313,15 @@ struct RemainingSection: View {
                     caption: "ударов сердца"
                 )
                 ForEach(model.data.counters) { counter in
-                    Button {
-                        editingCounter = counter
-                    } label: {
-                        CounterTile(
-                            emoji: counter.emoji,
-                            value: Format.number(counter.remaining(remainingYears: stats.remainingYears)),
-                            caption: counter.title
-                        )
-                    }
-                    .buttonStyle(.plain)
+                    LivingCounterTile(
+                        counter: counter,
+                        remaining: counter.remaining(remainingYears: stats.remainingYears),
+                        now: stats.now,
+                        onOpen: { openedCounter = CounterSelection(id: counter.id) },
+                        onLog: {
+                            if model.logCounterToday(id: counter.id) { loggedCount += 1 }
+                        }
+                    )
                 }
                 Button {
                     isAddingCounter = true
@@ -333,12 +342,88 @@ struct RemainingSection: View {
                 .buttonStyle(.plain)
             }
         }
-        .sheet(item: $editingCounter) { counter in
-            CounterEditorView(counter: counter)
+        .sheet(item: $openedCounter) { selection in
+            CounterDetailView(counterID: selection.id)
         }
         .sheet(isPresented: $isAddingCounter) {
             CounterEditorView(counter: nil)
         }
+        .sensoryFeedback(.success, trigger: loggedCount)
+        .onAppear {
+            if DebugLaunch.openCounterDetail, let first = model.data.counters.first {
+                openedCounter = CounterSelection(id: first.id)
+            }
+        }
+    }
+}
+
+struct CounterSelection: Identifiable, Hashable {
+    let id: UUID
+}
+
+/// Свой счётчик: сколько раз осталось, когда было в последний раз и кнопка «Было».
+struct LivingCounterTile: View {
+    let counter: LifeCounter
+    let remaining: Int
+    let now: Date
+    let onOpen: () -> Void
+    let onLog: () -> Void
+
+    var body: some View {
+        let loggedToday = counter.isLogged(on: now)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(counter.emoji)
+                .font(.title3)
+            Text(Format.number(remaining))
+                .font(.system(size: 28, weight: .light))
+                .monospacedDigit()
+                .foregroundStyle(Color.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text(counter.title)
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            Text(lastTimeText)
+                .font(.caption2)
+                .foregroundStyle(counter.isOverdue(now: now) ? Theme.accent : Theme.tertiaryText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+        .padding(14)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .onTapGesture(perform: onOpen)
+        .overlay(alignment: .topTrailing) {
+            Button(action: onLog) {
+                Image(systemName: loggedToday ? "checkmark" : "plus")
+                    .font(.system(size: 13, weight: .bold))
+                    .frame(width: 30, height: 30)
+                    .background(loggedToday ? Theme.future : Theme.accent, in: Circle())
+                    .foregroundStyle(loggedToday ? Color.white.opacity(0.7) : Color.black)
+            }
+            .buttonStyle(.plain)
+            .disabled(loggedToday)
+            .padding(10)
+            .accessibilityLabel(loggedToday ? "Сегодня уже отмечено" : "Было сегодня")
+        }
+        .contextMenu {
+            Button(action: onLog) {
+                Label("Было сегодня", systemImage: "plus")
+            }
+            .disabled(loggedToday)
+            Button(action: onOpen) {
+                Label("Подробнее", systemImage: "clock.arrow.circlepath")
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var lastTimeText: String {
+        guard let days = counter.daysSinceLast(now: now) else { return "нажми +, когда случится" }
+        return "последний раз — " + Format.daysAgo(days)
     }
 }
 

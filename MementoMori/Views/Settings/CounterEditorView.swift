@@ -79,6 +79,14 @@ struct CounterEditorView: View {
                     Text("Если видишь родителей 5 раз в год и надеешься, что так будет ещё лет 20, — впереди около 100 встреч. Не так уж много.")
                 }
 
+                if draft.supportsOverdueReminders {
+                    Section {
+                        Toggle("Напоминать, если давно не было", isOn: $draft.remindsWhenOverdue)
+                    } footer: {
+                        Text("Отмечай «Было» на главном экране. Если перерыв станет заметно дольше обычного (\(Format.everyInterval(days: draft.usualIntervalDays ?? 1))), придёт мягкое напоминание.")
+                    }
+                }
+
                 Section {
                     HStack {
                         Text("Осталось примерно")

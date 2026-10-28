@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 /// Отладочная галерея: все виджеты на демонстрационных данных.
-/// Открывается аргументом запуска `-MementoWidgetGallery 1` (или 2).
+/// Открывается аргументом запуска `-MementoWidgetGallery 1` (страницы 1–4).
 struct WidgetGalleryView: View {
     let page: Int
     private let snapshot = WidgetSnapshot.sample
@@ -23,6 +23,7 @@ struct WidgetGalleryView: View {
                     switch page {
                     case 1: firstPage(stats: stats, goal: goal)
                     case 2: secondPage(stats: stats)
+                    case 4: lastTimePage(stats: stats)
                     default: travelPage
                     }
                 }
@@ -85,6 +86,41 @@ struct WidgetGalleryView: View {
 }
 
 extension WidgetGalleryView {
+    /// «Последний раз» и «Письмо себе».
+    @ViewBuilder
+    func lastTimePage(stats: LifeStats) -> some View {
+        let now = Date()
+        let counters = snapshot.countersByUrgency(now: now)
+        let letter = snapshot.letterForWidget(now: now)
+        let sealed: FutureLetter? = {
+            var data = AppData()
+            data.profile = snapshot.profile
+            data.letters = snapshot.letters
+            return data.sealedLetters(now: now).last
+        }()
+        HStack(spacing: 20) {
+            WidgetFrame(width: 170, height: 170) {
+                if let counter = counters.first {
+                    CounterSmallView(counter: counter, stats: stats, date: now)
+                }
+            }
+            WidgetFrame(width: 170, height: 170) {
+                LetterSmallView(letter: sealed, isWaiting: false, birthDate: stats.birthDate, date: now)
+            }
+        }
+        WidgetFrame(width: 360, height: 170) {
+            CountersMediumView(counters: counters, stats: stats, date: now)
+        }
+        HStack(spacing: 20) {
+            WidgetFrame(width: 170, height: 170) {
+                LetterSmallView(letter: letter?.letter, isWaiting: letter?.isWaiting ?? false, birthDate: stats.birthDate, date: now)
+            }
+            AccessoryFrame(width: 172, height: 76) {
+                LetterRectangularView(letter: sealed, isWaiting: false, birthDate: stats.birthDate, date: now)
+            }
+        }
+    }
+
     @ViewBuilder
     var travelPage: some View {
         WidgetFrame(width: 360, height: 170) {

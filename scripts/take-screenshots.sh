@@ -88,6 +88,12 @@ shot 09-widgets-more -MementoDemo -MementoWidgetGallery 2
 shot 10-world -MementoDemo -selectedTab 2 -AppleLocale ru_RU
 shot 11-widgets-travel -MementoDemo -MementoWidgetGallery 3
 shot 12-new-goal -MementoDemo -selectedTab 1 -MementoNewGoal "Поехать в Японию"
+shot 13-counter -MementoDemo -selectedTab 0 -MementoCounterDetail YES
+shot 14-letters -MementoDemo -selectedTab 3 -lifeCalendarMode weeks -MementoScrollToBottom YES
+shot 15-letter-arrived -MementoDemo -selectedTab 0 -MementoLetter open
+shot 16-new-letter -MementoDemo -selectedTab 3 -MementoLetter new
+shot 17-photo-import -MementoDemo -selectedTab 2 -MementoPhotoImportDemo YES -AppleLocale ru_RU
+shot 18-widgets-last-time -MementoDemo -MementoWidgetGallery 4
 xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
 
 # Уменьшаем, чтобы README не был тяжёлым.

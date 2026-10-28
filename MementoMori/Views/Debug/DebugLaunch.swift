@@ -8,6 +8,9 @@ import Foundation
 ///   -MementoOnboardingStep 1      открыть знакомство на нужном шаге
 ///   -MementoScrollToBottom YES    открыть «Сегодня» прокрученным вниз
 ///   -MementoNewGoal "текст"       открыть создание цели с готовым названием
+///   -MementoCounterDetail YES     открыть подробности первого счётчика
+///   -MementoLetter open           открыть письмо, которое ждёт (new — написать новое)
+///   -MementoPhotoImportDemo YES   показать поиск стран в фото на демо-данных
 ///   -selectedTab 2                открыть нужную вкладку (0 — «Сегодня», 1 — «Цели», 2 — «Мир», 3 — «Жизнь»)
 enum DebugLaunch {
     static var isDemo: Bool {
@@ -40,6 +43,33 @@ enum DebugLaunch {
         return UserDefaults.standard.string(forKey: "MementoNewGoal")
         #else
         return nil
+        #endif
+    }
+
+    /// Открыть подробности первого счётчика на «Сегодня».
+    static var openCounterDetail: Bool {
+        #if DEBUG
+        return UserDefaults.standard.bool(forKey: "MementoCounterDetail")
+        #else
+        return false
+        #endif
+    }
+
+    /// Открыть письмо, которое ждёт, или создание нового (значение «new»).
+    static var letterScreen: String? {
+        #if DEBUG
+        return UserDefaults.standard.string(forKey: "MementoLetter")
+        #else
+        return nil
+        #endif
+    }
+
+    /// Показать результат поиска стран в фото на демо-данных.
+    static var photoImportDemo: Bool {
+        #if DEBUG
+        return UserDefaults.standard.bool(forKey: "MementoPhotoImportDemo")
+        #else
+        return false
         #endif
     }
 

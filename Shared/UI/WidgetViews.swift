@@ -427,3 +427,242 @@ struct TravelLargeView: View {
         .foregroundStyle(Color.white)
     }
 }
+
+// MARK: - «Последний раз»
+
+/// Сколько дней назад: крупно число, мелко подпись. Если давно — акцентом.
+private struct DaysAgoText: View {
+    let counter: LifeCounter
+    let date: Date
+    var size: CGFloat = 36
+
+    var body: some View {
+        if let days = counter.daysSinceLast(now: date) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(days > 1 ? Format.number(days) : Format.daysAgo(days))
+                    .font(.system(size: days > 1 ? size : size * 0.7, weight: .thin))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .foregroundStyle(counter.isOverdue(now: date) ? Theme.accent : Color.white)
+                    .widgetAccentable()
+                if days > 1 {
+                    Text(RussianPlural.form(days, "день назад", "дня назад", "дней назад"))
+                        .font(.caption2)
+                        .foregroundStyle(Color.white.opacity(0.6))
+                }
+            }
+        } else {
+            Text("ещё не было")
+                .font(.system(size: size * 0.55, weight: .light))
+                .foregroundStyle(Color.white.opacity(0.8))
+        }
+    }
+}
+
+/// Кнопка «Было» или отметка, что сегодня уже было.
+private struct LogCounterButton: View {
+    let counter: LifeCounter
+    let date: Date
+    var compact = false
+
+    var body: some View {
+        if counter.isLogged(on: date) {
+            WidgetButtonLabel(systemImage: "checkmark", title: compact ? nil : "Сегодня", isProminent: false)
+                .opacity(0.7)
+        } else {
+            Button(intent: LogCounterIntent(counterID: counter.id)) {
+                WidgetButtonLabel(systemImage: "plus", title: compact ? nil : "Было сегодня", isProminent: true)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+/// «≈ 98 встреч с родителями» — название счётчика читается после числа.
+func counterRemainingText(_ counter: LifeCounter, stats: LifeStats?) -> String {
+    guard let stats else { return counter.title }
+    let left = counter.remaining(remainingYears: stats.remainingYears)
+    return "≈ \(Format.number(left)) \(counter.title)"
+}
+
+struct CounterSmallView: View {
+    let counter: LifeCounter
+    let stats: LifeStats?
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Text(counter.emoji)
+                    .font(.system(size: 15))
+                WidgetCaption(text: "ПОСЛЕДНИЙ РАЗ")
+            }
+            Spacer(minLength: 0)
+            DaysAgoText(counter: counter, date: date)
+            Text(counterRemainingText(counter, stats: stats))
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.6))
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 4)
+            LogCounterButton(counter: counter, date: date)
+        }
+        .foregroundStyle(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+struct CountersMediumView: View {
+    let counters: [LifeCounter]
+    let stats: LifeStats?
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            WidgetCaption(text: "ПОСЛЕДНИЙ РАЗ")
+            ForEach(counters.prefix(3)) { counter in
+                HStack(spacing: 10) {
+                    Text(counter.emoji)
+                        .font(.system(size: 18))
+                        .frame(width: 24)
+                    Link(destination: DeepLink.url(for: .counter(counter.id))) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(counterRemainingText(counter, stats: stats))
+                                .font(.system(size: 13, weight: .medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Text(lastTimeText(counter))
+                                .font(.system(size: 11))
+                                .foregroundStyle(counter.isOverdue(now: date) ? Theme.accent : Color.white.opacity(0.6))
+                                .lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    LogCounterButton(counter: counter, date: date, compact: true)
+                        .frame(width: 44)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func lastTimeText(_ counter: LifeCounter) -> String {
+        guard let days = counter.daysSinceLast(now: date) else { return "ещё не отмечено" }
+        return "последний раз — " + Format.daysAgo(days)
+    }
+}
+
+struct NoCountersView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            WidgetCaption(text: "ПОСЛЕДНИЙ РАЗ")
+            Spacer(minLength: 0)
+            Text("❤️")
+                .font(.title3)
+            Text("Добавь счётчик на главном экране приложения — встречи с родителями, отпуска, книги — и отмечай, когда это было.")
+                .font(.caption)
+                .foregroundStyle(Color.white.opacity(0.8))
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - «Письмо себе»
+
+/// Сколько дней до дня, когда письмо можно будет открыть.
+func daysUntilLetter(_ letter: FutureLetter, birthDate: Date, now: Date, calendar: Calendar = .memento) -> Int {
+    let unlock = letter.unlockDate(birthDate: birthDate, calendar: calendar)
+    return max(0, calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: unlock).day ?? 0)
+}
+
+struct LetterSmallView: View {
+    let letter: FutureLetter?
+    let isWaiting: Bool
+    let birthDate: Date
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            WidgetCaption(text: "ПИСЬМО СЕБЕ")
+            Spacer(minLength: 0)
+            if let letter, isWaiting {
+                Image(systemName: "envelope.open.fill")
+                    .font(.title2)
+                    .foregroundStyle(Theme.accent)
+                    .widgetAccentable()
+                Text("Пришло письмо из \(String(Calendar.memento.component(.year, from: letter.createdAt))) года")
+                    .font(.system(.subheadline, design: .serif).weight(.medium))
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.8)
+                Text("Открой — оно ждёт")
+                    .font(.caption2)
+                    .foregroundStyle(Color.white.opacity(0.6))
+            } else if let letter {
+                let days = daysUntilLetter(letter, birthDate: birthDate, now: date)
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.accent)
+                    .widgetAccentable()
+                Text(Format.number(days))
+                    .font(.system(size: 36, weight: .thin))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Text(RussianPlural.form(days, "день до письма", "дня до письма", "дней до письма"))
+                    .font(.caption2)
+                    .foregroundStyle(Color.white.opacity(0.6))
+                Text(letter.openLabel(birthDate: birthDate).capitalizedFirst)
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.white.opacity(0.45))
+                    .lineLimit(1)
+            } else {
+                Image(systemName: "envelope")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                Text("Напиши письмо себе в будущее — оно откроется в выбранный день.")
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.8))
+                    .minimumScaleFactor(0.8)
+            }
+        }
+        .foregroundStyle(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+}
+
+struct LetterRectangularView: View {
+    let letter: FutureLetter?
+    let isWaiting: Bool
+    let birthDate: Date
+    let date: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let letter, isWaiting {
+                Label("Письмо ждёт", systemImage: "envelope.open.fill")
+                    .font(.headline)
+                    .widgetAccentable()
+                Text("из \(String(Calendar.memento.component(.year, from: letter.createdAt))) года — открой")
+                    .font(.caption)
+            } else if let letter {
+                let days = daysUntilLetter(letter, birthDate: birthDate, now: date)
+                Label(Format.days(days), systemImage: "envelope.fill")
+                    .font(.headline)
+                    .widgetAccentable()
+                Text("до письма себе · \(letter.openLabel(birthDate: birthDate))")
+                    .font(.caption)
+                    .lineLimit(1)
+            } else {
+                Label("Письмо себе", systemImage: "envelope")
+                    .font(.headline)
+                Text("Напиши его в приложении")
+                    .font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

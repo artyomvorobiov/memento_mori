@@ -78,6 +78,28 @@ enum ReminderComposer {
         )
     }
 
+    static func letterReady(_ letter: FutureLetter) -> ReminderMessage {
+        ReminderMessage(
+            title: "📬 Письмо из прошлого",
+            body: "Письмо от \(Format.date(letter.createdAt)) можно открыть. Интересно, что изменилось с тех пор?"
+        )
+    }
+
+    static func counterOverdue(_ counter: LifeCounter, at date: Date, profile: Profile, calendar: Calendar = .memento) -> ReminderMessage {
+        var body = ""
+        if let days = counter.daysSinceLast(now: date, calendar: calendar) {
+            body = "Последний раз — \(Format.daysAgo(days))"
+            if let usual = counter.usualIntervalDays {
+                body += ", а обычно \(Format.everyInterval(days: usual))"
+            }
+            body += ". "
+        }
+        let stats = LifeStats(profile: profile, now: date, calendar: calendar)
+        let left = counter.remaining(remainingYears: stats.remainingYears)
+        body += left > 0 ? "Впереди ≈ \(Format.number(left)) \(counter.title). Может, пора?" : "Может, пора?"
+        return ReminderMessage(title: "\(counter.emoji) Давно не было", body: body)
+    }
+
     static func quote(for date: Date, calendar: Calendar = .memento) -> ReminderMessage {
         let quote = Quotes.ofTheDay(date, calendar: calendar)
         return ReminderMessage(title: "Memento mori", body: "«\(quote.text)» — \(quote.author)")
@@ -118,12 +140,28 @@ enum ReminderPlanner {
     static let maxCount = 60
     static let dailyHorizonDays = 30
     static let weeklyHorizonWeeks = 10
+    /// Письма могут ждать годами — им место в расписании оставляем всегда.
+    static let maxLetterReminders = 10
 
     static func plan(data: AppData, now: Date = Date(), calendar: Calendar = .memento) -> [PlannedReminder] {
-        guard let profile = data.profile, data.reminders.isEnabled else { return [] }
+        guard let profile = data.profile else { return [] }
+        // Письма и «давно не было» приходят, даже если ежедневные напоминания выключены.
+        let letters = Array(letterReminders(data: data, profile: profile, now: now, calendar: calendar).prefix(maxLetterReminders))
+        var regular = counterReminders(data: data, profile: profile, now: now, calendar: calendar)
+        if data.reminders.isEnabled {
+            regular += periodicReminders(data: data, profile: profile, now: now, calendar: calendar)
+            if data.reminders.deadlineAlerts {
+                regular += deadlineReminders(data: data, profile: profile, now: now, calendar: calendar)
+            }
+        }
+        regular.sort { $0.date < $1.date }
+        let result = letters + regular.prefix(max(0, maxCount - letters.count))
+        return result.sorted { $0.date < $1.date }
+    }
+
+    private static func periodicReminders(data: AppData, profile: Profile, now: Date, calendar: Calendar) -> [PlannedReminder] {
         let settings = data.reminders
         var result: [PlannedReminder] = []
-
         switch settings.frequency {
         case .daily:
             let today = calendar.startOfDay(for: now)
@@ -158,36 +196,67 @@ enum ReminderPlanner {
                 cursor = fire.addingTimeInterval(60)
             }
         }
+        return result
+    }
 
-        if settings.deadlineAlerts {
-            for goal in data.activeGoals {
-                guard let deadline = goal.deadline(birthDate: profile.birthDate, calendar: calendar) else { continue }
-                let deadlineDay = calendar.startOfDay(for: deadline)
-                if let monthBefore = calendar.date(byAdding: .day, value: -30, to: deadlineDay),
-                   let fire = calendar.date(bySettingHour: settings.hour, minute: settings.minute, second: 0, of: monthBefore),
-                   fire > now {
-                    let message = ReminderComposer.deadlineSoon(goal: goal, deadline: deadline)
-                    result.append(PlannedReminder(
-                        id: "memento.deadline.soon.\(goal.id.uuidString)",
-                        date: fire,
-                        title: message.title,
-                        body: message.body
-                    ))
-                }
-                if let fire = calendar.date(bySettingHour: settings.hour, minute: settings.minute, second: 0, of: deadlineDay),
-                   fire > now {
-                    let message = ReminderComposer.deadlineToday(goal: goal)
-                    result.append(PlannedReminder(
-                        id: "memento.deadline.today.\(goal.id.uuidString)",
-                        date: fire,
-                        title: message.title,
-                        body: message.body
-                    ))
-                }
+    private static func deadlineReminders(data: AppData, profile: Profile, now: Date, calendar: Calendar) -> [PlannedReminder] {
+        let settings = data.reminders
+        var result: [PlannedReminder] = []
+        for goal in data.activeGoals {
+            guard let deadline = goal.deadline(birthDate: profile.birthDate, calendar: calendar) else { continue }
+            let deadlineDay = calendar.startOfDay(for: deadline)
+            if let monthBefore = calendar.date(byAdding: .day, value: -30, to: deadlineDay),
+               let fire = calendar.date(bySettingHour: settings.hour, minute: settings.minute, second: 0, of: monthBefore),
+               fire > now {
+                let message = ReminderComposer.deadlineSoon(goal: goal, deadline: deadline)
+                result.append(PlannedReminder(
+                    id: "memento.deadline.soon.\(goal.id.uuidString)",
+                    date: fire,
+                    title: message.title,
+                    body: message.body
+                ))
+            }
+            if let fire = calendar.date(bySettingHour: settings.hour, minute: settings.minute, second: 0, of: deadlineDay),
+               fire > now {
+                let message = ReminderComposer.deadlineToday(goal: goal)
+                result.append(PlannedReminder(
+                    id: "memento.deadline.today.\(goal.id.uuidString)",
+                    date: fire,
+                    title: message.title,
+                    body: message.body
+                ))
             }
         }
-
-        result.sort { $0.date < $1.date }
-        return Array(result.prefix(maxCount))
+        return result
     }
+
+    /// День открытия письма — в обычное время напоминаний.
+    private static func letterReminders(data: AppData, profile: Profile, now: Date, calendar: Calendar) -> [PlannedReminder] {
+        let settings = data.reminders
+        return data.letters.compactMap { letter -> PlannedReminder? in
+            guard !letter.isOpened else { return nil }
+            let day = letter.unlockDate(birthDate: profile.birthDate, calendar: calendar)
+            guard let fire = calendar.date(bySettingHour: settings.hour, minute: settings.minute, second: 0, of: day),
+                  fire > now
+            else { return nil }
+            let message = ReminderComposer.letterReady(letter)
+            return PlannedReminder(id: letterReminderID(letter.id), date: fire, title: message.title, body: message.body)
+        }
+        .sorted { $0.date < $1.date }
+    }
+
+    /// По одному ближайшему напоминанию «давно не было» на счётчик.
+    private static func counterReminders(data: AppData, profile: Profile, now: Date, calendar: Calendar) -> [PlannedReminder] {
+        let settings = data.reminders
+        return data.counters.compactMap { counter -> PlannedReminder? in
+            guard let fire = counter.nextOverdueReminder(after: now, hour: settings.hour, minute: settings.minute, calendar: calendar) else {
+                return nil
+            }
+            let message = ReminderComposer.counterOverdue(counter, at: fire, profile: profile, calendar: calendar)
+            return PlannedReminder(id: counterReminderID(counter.id), date: fire, title: message.title, body: message.body)
+        }
+    }
+
+    static func letterReminderID(_ id: UUID) -> String { "memento.letter.\(id.uuidString)" }
+    static func counterReminderID(_ id: UUID) -> String { "memento.counter.\(id.uuidString)" }
 }

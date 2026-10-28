@@ -14,16 +14,19 @@ enum LifeCalendarMode: String, CaseIterable, Identifiable {
     }
 }
 
-/// Отметки целей в сетке: выполненные — в неделе выполнения, сроки — в неделе дедлайна.
+/// Отметки в сетке: выполненные цели — в неделе выполнения, сроки — в неделе дедлайна,
+/// письма в будущее — в неделе, когда их можно открыть.
 struct WeekMarkers {
     var completed: Set<Int> = []
     var deadlines: Set<Int> = []
+    var letters: Set<Int> = []
 }
 
 struct LifeCalendarView: View {
     @Environment(AppModel.self) private var model
     @AppStorage("lifeCalendarMode") private var modeRaw = LifeCalendarMode.weeks.rawValue
     @State private var selectedIndex: Int?
+    @State private var openedLetter: LetterSelection?
 
     private var mode: LifeCalendarMode { LifeCalendarMode(rawValue: modeRaw) ?? .weeks }
 
@@ -56,16 +59,22 @@ struct LifeCalendarView: View {
                             }
 
                             legend
+
+                            LettersSection()
+                                .padding(.top, 12)
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 24)
                     }
+                    .defaultScrollAnchor(DebugLaunch.scrollToBottom ? .bottom : .top)
                     .safeAreaInset(edge: .bottom) {
                         if let selectedIndex, mode == .weeks {
                             WeekInfoCard(
                                 stats: stats,
                                 index: selectedIndex,
-                                goals: goals(in: selectedIndex, stats: stats)
+                                goals: goals(in: selectedIndex, stats: stats),
+                                letters: letters(in: selectedIndex, stats: stats),
+                                onOpenLetter: { openedLetter = LetterSelection(id: $0) }
                             ) {
                                 withAnimation(.snappy) { self.selectedIndex = nil }
                             }
@@ -77,6 +86,9 @@ struct LifeCalendarView: View {
             .background(Theme.background)
             .navigationTitle("Жизнь")
             .animation(.snappy, value: selectedIndex)
+            .sheet(item: $openedLetter) { selection in
+                LetterView(letterID: selection.id)
+            }
         }
     }
 
@@ -110,6 +122,14 @@ struct LifeCalendarView: View {
                         .strokeBorder(Theme.accent, lineWidth: 1)
                         .frame(width: 9, height: 9)
                     Text("срок")
+                }
+                if !model.data.letters.isEmpty {
+                    HStack(spacing: 5) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .strokeBorder(Color.white, lineWidth: 1)
+                            .frame(width: 9, height: 9)
+                        Text("письмо")
+                    }
                 }
             }
         }
@@ -145,7 +165,17 @@ struct LifeCalendarView: View {
                 markers.deadlines.insert(index)
             }
         }
+        for letter in model.data.letters {
+            if let index = stats.gridIndex(for: letter.unlockDate(birthDate: stats.birthDate)) {
+                markers.letters.insert(index)
+            }
+        }
         return markers
+    }
+
+    private func letters(in index: Int, stats: LifeStats) -> [FutureLetter] {
+        guard let range = stats.dateRange(forGridIndex: index) else { return [] }
+        return model.data.letters.filter { range.contains($0.unlockDate(birthDate: stats.birthDate)) }
     }
 
     private func goals(in index: Int, stats: LifeStats) -> [Goal] {
@@ -236,6 +266,10 @@ struct WeeksGrid: View {
                     let ring = Path(roundedRect: rect.insetBy(dx: -0.8, dy: -0.8), cornerRadius: radius + 0.8)
                     context.stroke(ring, with: .color(Theme.accent), lineWidth: 1.2)
                 }
+                if markers.letters.contains(index) {
+                    let ring = Path(roundedRect: rect.insetBy(dx: -0.8, dy: -0.8), cornerRadius: radius + 0.8)
+                    context.stroke(ring, with: .color(.white), lineWidth: 1.2)
+                }
                 if index == selectedIndex {
                     let ring = Path(roundedRect: rect.insetBy(dx: -1.5, dy: -1.5), cornerRadius: radius + 1.5)
                     context.stroke(ring, with: .color(.white), lineWidth: 1.5)
@@ -276,6 +310,8 @@ struct WeekInfoCard: View {
     let stats: LifeStats
     let index: Int
     let goals: [Goal]
+    var letters: [FutureLetter] = []
+    var onOpenLetter: (UUID) -> Void = { _ in }
     let onClose: () -> Void
 
     var body: some View {
@@ -305,6 +341,22 @@ struct WeekInfoCard: View {
                     .font(.subheadline)
                     .foregroundStyle(goal.isCompleted ? Theme.accent : Color.white)
                     .lineLimit(2)
+            }
+            ForEach(letters) { letter in
+                Button {
+                    onOpenLetter(letter.id)
+                } label: {
+                    Label(
+                        letter.isOpened
+                            ? "Письмо от \(Format.shortDate(letter.createdAt)) — прочитано"
+                            : "Письмо от \(Format.shortDate(letter.createdAt)) откроется в эту неделю",
+                        systemImage: letter.isOpened ? "envelope.open" : "envelope.fill"
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(Color.white)
+                    .lineLimit(2)
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(16)

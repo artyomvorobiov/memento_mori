@@ -40,9 +40,13 @@ struct RootView: View {
 
 struct MainTabView: View {
     static let worldTab = 2
+    static let lifeTab = 3
 
     @Environment(AppModel.self) private var model
     @AppStorage("selectedTab") private var selectedTab = 0
+    @State private var routedLetter: LetterSelection?
+    @State private var routedCounter: CounterSelection?
+    @State private var isWritingLetter = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -57,10 +61,53 @@ struct MainTabView: View {
                 .tag(Self.worldTab)
             LifeCalendarView()
                 .tabItem { Label("Жизнь", systemImage: "square.grid.3x3.fill") }
-                .tag(3)
+                .tag(Self.lifeTab)
         }
         .sensoryFeedback(.success, trigger: model.data.completedGoals.count) { old, new in
             new > old
+        }
+        .onOpenURL { url in
+            if let link = DeepLink(url: url) {
+                route(link)
+            }
+        }
+        .onAppear(perform: openDebugScreen)
+        .sheet(item: $routedLetter) { selection in
+            LetterView(letterID: selection.id)
+        }
+        .sheet(item: $routedCounter) { selection in
+            CounterDetailView(counterID: selection.id)
+        }
+        .sheet(isPresented: $isWritingLetter) {
+            LetterEditorView()
+        }
+    }
+
+    /// Ссылки из виджетов: письмо, новое письмо, счётчик.
+    private func route(_ link: DeepLink) {
+        switch link {
+        case .letter(let id):
+            selectedTab = Self.lifeTab
+            routedLetter = LetterSelection(id: id)
+        case .newLetter:
+            selectedTab = Self.lifeTab
+            isWritingLetter = true
+        case .counter(let id):
+            selectedTab = 0
+            routedCounter = CounterSelection(id: id)
+        }
+    }
+
+    private func openDebugScreen() {
+        switch DebugLaunch.letterScreen {
+        case "open":
+            if let letter = model.waitingLetters().first {
+                routedLetter = LetterSelection(id: letter.id)
+            }
+        case "new":
+            isWritingLetter = true
+        default:
+            break
         }
     }
 }

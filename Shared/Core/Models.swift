@@ -301,6 +301,7 @@ struct ExpectancyChoice: Equatable {
 
 /// Пользовательский счётчик в духе «The Tail End»: сколько раз ещё случится
 /// что-то, что происходит N раз в год (встречи с родителями, отпуска, книги).
+/// Каждый раз можно отметить «Было» — тогда видно, когда это было в последний раз.
 struct LifeCounter: Identifiable, Codable, Hashable {
     var id: UUID
     var title: String
@@ -308,23 +309,45 @@ struct LifeCounter: Identifiable, Codable, Hashable {
     var perYear: Double
     /// Сколько лет это ещё продлится. nil — до конца жизни.
     var years: Int?
+    /// Отметки «Было» по возрастанию даты — по одной на каждую встречу, книгу, отпуск.
+    var log: [Date]
+    /// Мягко напомнить, если перерыв станет заметно дольше обычного.
+    var remindsWhenOverdue: Bool
+    var createdAt: Date
 
-    init(id: UUID = UUID(), title: String, emoji: String = "✦", perYear: Double, years: Int? = nil) {
+    init(
+        id: UUID = UUID(),
+        title: String,
+        emoji: String = "✦",
+        perYear: Double,
+        years: Int? = nil,
+        log: [Date] = [],
+        remindsWhenOverdue: Bool = true,
+        createdAt: Date = Date()
+    ) {
         self.id = id
         self.title = title
         self.emoji = emoji
         self.perYear = perYear
         self.years = years
+        self.log = log.sorted()
+        self.remindsWhenOverdue = remindsWhenOverdue
+        self.createdAt = createdAt
     }
 
     /// Сколько раз осталось, если жить осталось remainingYears лет.
     func remaining(remainingYears: Double) -> Int {
+        remaining(remainingYears: remainingYears, perYear: perYear)
+    }
+
+    /// То же при другой частоте — например, фактической.
+    func remaining(remainingYears: Double, perYear: Double) -> Int {
         let span = min(Double(years ?? Int.max), max(0, remainingYears))
-        return Int((perYear * span).rounded(.down))
+        return Int((max(0, perYear) * span).rounded(.down))
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, title, emoji, perYear, years
+        case id, title, emoji, perYear, years, log, remindsWhenOverdue, createdAt
     }
 
     init(from decoder: Decoder) throws {
@@ -334,6 +357,9 @@ struct LifeCounter: Identifiable, Codable, Hashable {
         emoji = try c.decodeIfPresent(String.self, forKey: .emoji) ?? "✦"
         perYear = try c.decodeIfPresent(Double.self, forKey: .perYear) ?? 1
         years = try c.decodeIfPresent(Int.self, forKey: .years)
+        log = (try c.decodeIfPresent([Date].self, forKey: .log) ?? []).sorted()
+        remindsWhenOverdue = try c.decodeIfPresent(Bool.self, forKey: .remindsWhenOverdue) ?? true
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? log.first ?? Date()
     }
 }
 
@@ -395,12 +421,13 @@ struct AppData: Codable {
     var goals: [Goal] = []
     var counters: [LifeCounter] = []
     var visitedCountries: [String] = []
+    var letters: [FutureLetter] = []
     var reminders = ReminderSettings()
 
     init() {}
 
     enum CodingKeys: String, CodingKey {
-        case version, profile, goals, counters, visitedCountries, reminders
+        case version, profile, goals, counters, visitedCountries, letters, reminders
     }
 
     init(from decoder: Decoder) throws {
@@ -410,6 +437,7 @@ struct AppData: Codable {
         goals = try c.decodeIfPresent([Goal].self, forKey: .goals) ?? []
         counters = try c.decodeIfPresent([LifeCounter].self, forKey: .counters) ?? []
         visitedCountries = try c.decodeIfPresent([String].self, forKey: .visitedCountries) ?? []
+        letters = try c.decodeIfPresent([FutureLetter].self, forKey: .letters) ?? []
         reminders = try c.decodeIfPresent(ReminderSettings.self, forKey: .reminders) ?? ReminderSettings()
     }
 }
@@ -512,6 +540,59 @@ extension AppData {
         } else {
             visitedCountries.removeAll { $0 == code }
         }
+    }
+
+    // MARK: Счётчики
+
+    func counter(id: UUID) -> LifeCounter? {
+        counters.first { $0.id == id }
+    }
+
+    /// Отметить «Было» в указанный момент.
+    mutating func logCounter(id: UUID, at date: Date) {
+        guard let index = counters.firstIndex(where: { $0.id == id }) else { return }
+        let position = counters[index].log.firstIndex { $0 > date } ?? counters[index].log.endIndex
+        counters[index].log.insert(date, at: position)
+    }
+
+    /// Отметить «Было сегодня», если сегодня ещё не отмечено. Возвращает false, если уже было.
+    @discardableResult
+    mutating func logCounterToday(id: UUID, now: Date = Date(), calendar: Calendar = .memento) -> Bool {
+        guard let counter = counter(id: id), !counter.isLogged(on: now, calendar: calendar) else { return false }
+        logCounter(id: id, at: now)
+        return true
+    }
+
+    mutating func removeCounterLog(id: UUID, date: Date) {
+        guard let index = counters.firstIndex(where: { $0.id == id }),
+              let position = counters[index].log.firstIndex(of: date)
+        else { return }
+        counters[index].log.remove(at: position)
+    }
+
+    // MARK: Письма
+
+    func letter(id: UUID) -> FutureLetter? {
+        letters.first { $0.id == id }
+    }
+
+    mutating func upsertLetter(_ letter: FutureLetter) {
+        var letter = letter
+        letter.text = letter.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let index = letters.firstIndex(where: { $0.id == letter.id }) {
+            letters[index] = letter
+        } else {
+            letters.append(letter)
+        }
+    }
+
+    mutating func openLetter(id: UUID, at date: Date = Date()) {
+        guard let index = letters.firstIndex(where: { $0.id == id }), letters[index].openedAt == nil else { return }
+        letters[index].openedAt = date
+    }
+
+    mutating func removeLetter(id: UUID) {
+        letters.removeAll { $0.id == id }
     }
 }
 

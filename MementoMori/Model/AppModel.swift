@@ -240,7 +240,21 @@ final class AppModel {
         }
     }
 
+    /// Отметить посещёнными сразу несколько стран (например, найденных в фото).
+    func markVisited(_ codes: [String]) {
+        guard !codes.isEmpty else { return }
+        update { data in
+            for code in codes {
+                data.markVisited(code, true)
+            }
+        }
+    }
+
     // MARK: - Счётчики
+
+    func counter(id: UUID) -> LifeCounter? {
+        data.counter(id: id)
+    }
 
     func saveCounter(_ counter: LifeCounter) {
         update { data in
@@ -250,10 +264,60 @@ final class AppModel {
                 data.counters.append(counter)
             }
         }
+        if counter.remindsWhenOverdue && counter.supportsOverdueReminders {
+            ensureNotificationPermission()
+        }
     }
 
     func deleteCounter(id: UUID) {
         update { $0.counters.removeAll { $0.id == id } }
+    }
+
+    /// «Было сегодня». Возвращает false, если сегодня уже отмечено.
+    @discardableResult
+    func logCounterToday(id: UUID) -> Bool {
+        var logged = false
+        update { logged = $0.logCounterToday(id: id) }
+        return logged
+    }
+
+    func logCounter(id: UUID, at date: Date) {
+        update { $0.logCounter(id: id, at: date) }
+    }
+
+    func removeCounterLog(id: UUID, date: Date) {
+        update { $0.removeCounterLog(id: id, date: date) }
+    }
+
+    // MARK: - Письма в будущее
+
+    func letter(id: UUID) -> FutureLetter? {
+        data.letter(id: id)
+    }
+
+    func waitingLetters(at date: Date = Date()) -> [FutureLetter] {
+        data.waitingLetters(now: date)
+    }
+
+    func sealedLetters(at date: Date = Date()) -> [FutureLetter] {
+        data.sealedLetters(now: date)
+    }
+
+    var openedLetters: [FutureLetter] {
+        data.openedLetters
+    }
+
+    func saveLetter(_ letter: FutureLetter) {
+        update { $0.upsertLetter(letter) }
+        ensureNotificationPermission()
+    }
+
+    func openLetter(id: UUID) {
+        update { $0.openLetter(id: id) }
+    }
+
+    func deleteLetter(id: UUID) {
+        update { $0.removeLetter(id: id) }
     }
 
     // MARK: - Напоминания
@@ -265,6 +329,16 @@ final class AppModel {
 
     func requestNotificationPermission() async -> Bool {
         await scheduler.requestAuthorization()
+    }
+
+    /// Письмам и «давно не было» нужны уведомления: спросим разрешение, если ещё не спрашивали.
+    private func ensureNotificationPermission() {
+        guard managesReminders else { return }
+        Task {
+            if await scheduler.authorizationStatus() == .notDetermined, await scheduler.requestAuthorization() {
+                scheduleReminders()
+            }
+        }
     }
 
     func notificationsDenied() async -> Bool {

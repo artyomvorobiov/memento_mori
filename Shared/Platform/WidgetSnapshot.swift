@@ -5,14 +5,19 @@ struct WidgetSnapshot {
     let profile: Profile?
     let goals: [Goal]
     var visitedCountries: [String] = []
+    var counters: [LifeCounter] = []
+    var letters: [FutureLetter] = []
+
+    init(data: AppData?) {
+        profile = data?.profile
+        goals = data?.goals ?? []
+        visitedCountries = data?.visitedCountries ?? []
+        counters = data?.counters ?? []
+        letters = data?.letters ?? []
+    }
 
     static func load() -> WidgetSnapshot {
-        let data = try? DataStore.shared.load()
-        return WidgetSnapshot(
-            profile: data?.profile,
-            goals: data?.goals ?? [],
-            visitedCountries: data?.visitedCountries ?? []
-        )
+        WidgetSnapshot(data: try? DataStore.shared.load())
     }
 
     var travel: TravelStats {
@@ -54,9 +59,28 @@ struct WidgetSnapshot {
         return dates
     }
 
+    /// Счётчики для виджета «Последний раз»: сначала те, где «пора», потом остальные с отметками.
+    func countersByUrgency(now: Date) -> [LifeCounter] {
+        counters.sorted { lhs, rhs in
+            let left = lhs.log.isEmpty ? -1 : lhs.urgency(now: now)
+            let right = rhs.log.isEmpty ? -1 : rhs.urgency(now: now)
+            return left != right ? left > right : lhs.createdAt < rhs.createdAt
+        }
+    }
+
+    /// Письмо для виджета: ждущее открытия или ближайшее запечатанное.
+    func letterForWidget(now: Date) -> (letter: FutureLetter, isWaiting: Bool)? {
+        var data = AppData()
+        data.profile = profile
+        data.letters = letters
+        if let waiting = data.waitingLetters(now: now).first {
+            return (waiting, true)
+        }
+        return data.sealedLetters(now: now).first.map { ($0, false) }
+    }
+
     /// Пример для галереи виджетов и отладочных превью.
     static var sample: WidgetSnapshot {
-        let data = DemoData.make()
-        return WidgetSnapshot(profile: data.profile, goals: data.goals, visitedCountries: data.visitedCountries)
+        WidgetSnapshot(data: DemoData.make())
     }
 }

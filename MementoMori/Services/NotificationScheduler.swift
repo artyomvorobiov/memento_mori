@@ -20,12 +20,14 @@ final class NotificationScheduler {
 
     func reschedule(with data: AppData) async {
         center.removeAllPendingNotificationRequests()
-        guard data.reminders.isEnabled, data.profile != nil else { return }
+        let calendar = Calendar.memento
+        // Кроме ежедневных напоминаний тут письма в будущее и «давно не было» у счётчиков.
+        let plan = ReminderPlanner.plan(data: data, now: Date(), calendar: calendar)
+        guard !plan.isEmpty else { return }
         let status = await authorizationStatus()
         guard status == .authorized || status == .provisional || status == .ephemeral else { return }
 
-        let calendar = Calendar.memento
-        for item in ReminderPlanner.plan(data: data, now: Date(), calendar: calendar) {
+        for item in plan {
             let content = UNMutableNotificationContent()
             content.title = item.title
             content.body = item.body

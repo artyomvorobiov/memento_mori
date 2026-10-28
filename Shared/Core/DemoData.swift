@@ -39,9 +39,30 @@ enum DemoData {
 
         data.visitedCountries = ["AE", "AM", "DE", "ES", "FR", "GE", "IT", "KZ", "ME", "RU", "TH", "TR"]
         data.counters = [
-            LifeCounter(title: "встреч с родителями", emoji: "❤️", perYear: 5, years: 20),
-            LifeCounter(title: "прочитанных книг", emoji: "📚", perYear: 12),
-            LifeCounter(title: "отпусков", emoji: "🏖️", perYear: 2),
+            LifeCounter(title: "встреч с родителями", emoji: "❤️", perYear: 5, years: 20,
+                        log: [400, 330, 250, 178, 104].map(daysAgo), createdAt: daysAgo(410)),
+            LifeCounter(title: "прочитанных книг", emoji: "📚", perYear: 12,
+                        log: [201, 178, 150, 120, 95, 66, 40, 12].map(daysAgo), createdAt: daysAgo(210)),
+            LifeCounter(title: "отпусков", emoji: "🏖️", perYear: 2,
+                        log: [300, 115, 38].map(daysAgo), createdAt: daysAgo(310)),
+        ]
+        data.letters = [
+            FutureLetter(
+                text: "Привет! Если ты это читаешь — прошёл ровно год. Надеюсь, горы уже случились, а испанский больше не откладывается на понедельник. И позвони родителям — прямо сейчас.",
+                createdAt: daysAgo(365), openDate: now
+            ),
+            FutureLetter(
+                text: "Сейчас мне 34. Хочется, чтобы к сорока книга была написана, а утро всё так же начиналось с радости.",
+                createdAt: daysAgo(30), openAge: 40
+            ),
+            FutureLetter(
+                text: "Только что вернулись с Эльбруса. Запомни это чувство: холод, рассвет и абсолютное счастье.",
+                createdAt: daysAgo(5), openDate: daysAhead(214)
+            ),
+            FutureLetter(
+                text: "Год назад было страшно менять работу. Как оно там?",
+                createdAt: daysAgo(400), openDate: daysAgo(35), openedAt: daysAgo(35)
+            ),
         ]
         return data
     }

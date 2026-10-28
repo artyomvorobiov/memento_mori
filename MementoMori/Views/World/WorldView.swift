@@ -24,6 +24,7 @@ struct WorldView: View {
     @State private var filter: Filter = .visited
     @State private var searchText = ""
     @State private var showShare = false
+    @State private var showPhotoImport = false
 
     var body: some View {
         let travel = TravelStats(data: model.data)
@@ -111,6 +112,12 @@ struct WorldView: View {
                     TravelShareCard(travel: travel)
                 }
             }
+            .sheet(isPresented: $showPhotoImport) {
+                PhotoImportView(demo: DebugLaunch.photoImportDemo)
+            }
+            .onAppear {
+                if DebugLaunch.photoImportDemo { showPhotoImport = true }
+            }
         }
     }
 
@@ -144,6 +151,32 @@ struct WorldView: View {
                     .font(.caption)
                     .foregroundStyle(Theme.tertiaryText)
             }
+            Button {
+                showPhotoImport = true
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.body)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Найти страны в фото")
+                            .font(.subheadline.weight(.medium))
+                        if travel.visitedCountries < 3 {
+                            Text("Карта заполнится за минуту — по геометкам снимков.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.secondaryText)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.tertiaryText)
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(12)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 4)
         }
         .padding(.vertical, 4)
     }

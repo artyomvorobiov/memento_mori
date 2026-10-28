@@ -7,5 +7,7 @@ struct MementoWidgetBundle: WidgetBundle {
         LifeWidget()
         GoalWidget()
         TravelWidget()
+        CountersWidget()
+        LetterWidget()
     }
 }

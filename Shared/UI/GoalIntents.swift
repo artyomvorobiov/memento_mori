@@ -49,4 +49,6 @@ enum WidgetKinds {
     static let life = "LifeWidget"
     static let goal = "GoalWidget"
     static let travel = "TravelWidget"
+    static let counters = "CountersWidget"
+    static let letter = "LetterWidget"
 }
