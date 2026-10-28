@@ -8,17 +8,28 @@ enum GoalSuggestions {
         guard query.count >= 3 else { return [] }
         let words = query.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
             .map(String.init)
-            .filter { $0.count >= 3 }
+            .filter { $0.count >= 3 && !stopWords.contains($0) }
         let excluded = Set(existingTitles.map(normalized))
-        let matches = IdeaLibrary.all.filter { idea in
+        let scored: [(idea: Idea, score: Int)] = IdeaLibrary.all.compactMap { idea in
             let title = normalized(idea.title)
-            guard title != query, !excluded.contains(title) else { return false }
-            if title.contains(query) { return true }
-            // Каждое слово запроса — с учётом окончаний: «японию» находит «Японии».
-            return !words.isEmpty && words.allSatisfy { title.contains(stem($0)) }
+            guard title != query, !excluded.contains(title) else { return nil }
+            if title.contains(query) { return (idea, 100) }
+            // Слова запроса с учётом окончаний: «японию» находит «Японии».
+            let score = words.filter { title.contains(stem($0)) }.count
+            return score > 0 ? (idea, score) : nil
         }
-        return Array(matches.prefix(limit))
+        // Чем больше совпавших слов, тем выше; при равенстве — порядок библиотеки.
+        let ranked = scored.enumerated().sorted { lhs, rhs in
+            lhs.element.score != rhs.element.score ? lhs.element.score > rhs.element.score : lhs.offset < rhs.offset
+        }
+        return ranked.prefix(limit).map(\.element.idea)
     }
+
+    /// Слова, которые есть почти в каждой цели и ничего не говорят о ней.
+    private static let stopWords: Set<String> = [
+        "поехать", "съездить", "побывать", "посетить", "увидеть", "сделать", "хочу", "очень",
+        "свой", "свою", "свое", "чтобы", "когда", "года", "году", "лет", "раз",
+    ]
 
     /// Категория по ключевым словам: «Прочитать…» → книги, «Пробежать…» → тело.
     static func category(for text: String) -> GoalCategory? {

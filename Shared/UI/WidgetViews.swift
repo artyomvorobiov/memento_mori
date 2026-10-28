@@ -349,6 +349,15 @@ struct WidgetEmptyView: View {
 
 // MARK: - «Мой мир»
 
+extension WorldMapStyle {
+    /// Для виджетов и картинок: только отмеченные маленькие страны.
+    static var compact: WorldMapStyle {
+        var style = WorldMapStyle()
+        style.showsUnmarkedDots = false
+        return style
+    }
+}
+
 struct TravelMediumView: View {
     let travel: TravelStats
 
@@ -365,7 +374,7 @@ struct TravelMediumView: View {
                     .font(.caption2)
                     .foregroundStyle(Color.white.opacity(0.6))
             }
-            WorldMapView(visited: travel.visited, wished: travel.wished)
+            WorldMapView(visited: travel.visited, wished: travel.wished, style: .compact)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .foregroundStyle(Color.white)
@@ -378,7 +387,7 @@ struct TravelLargeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             WidgetCaption(text: "МОЙ МИР")
-            WorldMapView(visited: travel.visited, wished: travel.wished)
+            WorldMapView(visited: travel.visited, wished: travel.wished, style: .compact)
                 .frame(maxWidth: .infinity)
                 .frame(height: 140)
             HStack(alignment: .firstTextBaseline, spacing: 6) {

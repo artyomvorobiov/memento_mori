@@ -268,7 +268,7 @@ struct GoalRow: View {
                         .foregroundStyle(DeadlineText.isOverdue(goal, birthDate: birthDate) ? Theme.accent : Theme.secondaryText)
                 }
                 if !goal.steps.isEmpty {
-                    Label("\(goal.completedStepsCount) из \(Format.genitive(goal.steps.count, "шага", "шагов"))", systemImage: "checklist")
+                    Text("\(Image(systemName: "checklist")) \(goal.completedStepsCount) из \(Format.genitive(goal.steps.count, "шага", "шагов"))")
                         .font(.caption)
                         .foregroundStyle(Theme.tertiaryText)
                 }

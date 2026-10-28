@@ -112,7 +112,7 @@ struct GoalEditorView: View {
                 if isNew, !categoryTouched, let category = GoalSuggestions.category(for: draft.title) {
                     draft.category = category
                 }
-                if isNew { focusedField = .title }
+                if isNew && DebugLaunch.newGoalTitle == nil { focusedField = .title }
             }
         }
     }

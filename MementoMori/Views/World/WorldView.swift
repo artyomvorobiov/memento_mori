@@ -130,7 +130,7 @@ struct WorldView: View {
                 }
                 Spacer()
                 statColumn(Format.percent(travel.worldShare, digits: 0), "мира")
-                statColumn("\(travel.continentsVisited)", "частей света\nиз 6")
+                statColumn("\(travel.continentsVisited)", RussianPlural.form(travel.continentsVisited, "часть света", "части света", "частей света") + "\nиз 6")
                 statColumn("\(travel.wishedCount)", "в планах")
             }
             ThinProgressBar(progress: travel.worldShare, fill: Theme.accent)
@@ -377,7 +377,7 @@ struct TravelShareCard: View {
                 .tracking(3)
                 .foregroundStyle(Theme.secondaryText)
 
-            WorldMapView(visited: travel.visited, wished: travel.wished)
+            WorldMapView(visited: travel.visited, wished: travel.wished, style: .compact)
                 .frame(height: 140)
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {

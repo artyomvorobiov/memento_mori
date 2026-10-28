@@ -103,6 +103,9 @@ struct WorldMapStyle {
     var wished = Theme.accent.opacity(0.35)
     var border = Color.black
     var selection = Color.white
+    /// Точки маленьких стран, где ещё не был: нужны на интерактивной карте, чтобы по ним можно было попасть.
+    var showsUnmarkedDots = true
+    var unmarkedDot = Color.white.opacity(0.3)
 }
 
 /// Карта мира: посещённые страны закрашены акцентом, желанные — полупрозрачно.
@@ -141,9 +144,10 @@ struct WorldMapView: View {
 
             let dotRadius = max(2.2, 1.6 * min(zoom, 3)) / scale
             for (code, center) in map.dots {
+                let isUnmarked = status(of: code) == .none
+                if isUnmarked && !style.showsUnmarkedDots { continue }
                 let rect = CGRect(x: center.x - dotRadius, y: center.y - dotRadius, width: dotRadius * 2, height: dotRadius * 2)
-                let dotColor: Color = status(of: code) == .none ? Color.white.opacity(0.45) : color(for: code)
-                context.fill(Path(ellipseIn: rect), with: .color(dotColor))
+                context.fill(Path(ellipseIn: rect), with: .color(isUnmarked ? style.unmarkedDot : color(for: code)))
             }
 
             if let selected {
