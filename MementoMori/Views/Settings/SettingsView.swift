@@ -170,23 +170,36 @@ struct SettingsView: View {
         }
     }
 
+    /// Что мешает виджетам видеть данные, или nil, если всё в порядке.
+    private var widgetProblem: String? {
+        let howTo = "В Xcode открой Signing & Capabilities → App Groups у таргетов MementoMori и MementoWidgetExtension и отметь в обоих одну и ту же группу. Подробнее — в README."
+        guard AppGroup.isAvailable else {
+            return "Виджеты не видят данные: у приложения не подключена App Group. " + howTo
+        }
+        if let widgetGroups = AppGroup.widgetProvisionedGroups, !widgetGroups.contains(AppGroup.identifier) {
+            let found = widgetGroups.isEmpty ? "ни одной группы" : widgetGroups.joined(separator: ", ")
+            return "Виджеты не видят данные: у приложения группа «\(AppGroup.identifier)», а у виджета — \(found). " + howTo
+        }
+        return nil
+    }
+
     private var widgetsSection: some View {
         Section {
             Text("Удерживай палец на свободном месте главного экрана → «Изменить» → «Добавить виджет» → Memento Mori. Для экрана блокировки: удерживай палец на заблокированном экране → «Настроить».")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondaryText)
-            if AppGroup.isAvailable {
-                Label("Виджеты видят данные · \(AppGroup.identifier)", systemImage: "checkmark.circle")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryText)
-            } else {
+            if let problem = widgetProblem {
                 Label {
-                    Text("Виджеты не видят данные: у приложения нет доступа к App Group «\(AppGroup.identifier)». В Xcode открой Signing & Capabilities у таргетов MementoMori и MementoWidgetExtension и включи одну и ту же группу в App Groups. Подробнее — в README.")
+                    Text(problem)
                 } icon: {
                     Image(systemName: "exclamationmark.triangle")
                 }
                 .font(.footnote)
                 .foregroundStyle(Theme.accent)
+            } else {
+                Label("Виджеты видят данные · \(AppGroup.identifier)", systemImage: "checkmark.circle")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryText)
             }
         } header: {
             Text("Виджеты")

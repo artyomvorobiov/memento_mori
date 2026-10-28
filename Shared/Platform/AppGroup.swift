@@ -62,10 +62,29 @@ enum AppGroup {
         return String(bundleID[..<dot])
     }
 
+    /// Группы из профиля подписи виджета — приложение читает их из вложенного расширения.
+    /// nil — профиля нет (например, в симуляторе), проверить нельзя.
+    static var widgetProvisionedGroups: [String]? {
+        guard let plugins = Bundle.main.builtInPlugInsURL,
+              let items = try? FileManager.default.contentsOfDirectory(at: plugins, includingPropertiesForKeys: nil),
+              let appex = items.first(where: { $0.pathExtension == "appex" })
+        else { return nil }
+        let profile = appex.appendingPathComponent("embedded.mobileprovision")
+        guard FileManager.default.fileExists(atPath: profile.path) else { return nil }
+        return provisionedGroups(at: profile)
+    }
+
+    /// Группы из профиля подписи этого процесса (приложения или виджета).
+    static var ownProvisionedGroups: [String] { provisionedGroups() }
+
     /// App Groups из встроенного профиля подписи (есть в сборках для своего iPhone).
     private static func provisionedGroups() -> [String] {
-        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
-              let data = try? Data(contentsOf: url),
+        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision") else { return [] }
+        return provisionedGroups(at: url)
+    }
+
+    private static func provisionedGroups(at url: URL) -> [String] {
+        guard let data = try? Data(contentsOf: url),
               let start = data.range(of: Data("<?xml".utf8)),
               let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex)
         else { return [] }

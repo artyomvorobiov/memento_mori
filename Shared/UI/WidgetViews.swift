@@ -343,7 +343,9 @@ struct WidgetEmptyView: View {
         if AppGroup.isAvailable {
             return "Открой приложение, чтобы начать отсчёт"
         }
-        return "Нет доступа к данным приложения. Включи App Groups у приложения и виджета — см. README."
+        let groups = AppGroup.ownProvisionedGroups
+        let detail = groups.isEmpty ? "у виджета не включена ни одна группа" : "у виджета: " + groups.joined(separator: ", ")
+        return "Нет доступа к данным: \(detail). В Xcode у MementoWidgetExtension включи ту же App Group, что у приложения."
     }
 }
 
