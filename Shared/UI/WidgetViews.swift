@@ -21,20 +21,13 @@ struct WidgetCaption: View {
 
 struct SmallLifeView: View {
     let stats: LifeStats
+    var unit: LifeUnit = .weeks
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             WidgetCaption(text: "MEMENTO MORI")
             Spacer(minLength: 4)
-            Text(Format.number(stats.remainingWeeks))
-                .font(.system(size: 40, weight: .thin))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .widgetAccentable()
-            Text(RussianPlural.form(stats.remainingWeeks, "неделя впереди", "недели впереди", "недель впереди"))
-                .font(.caption2)
-                .foregroundStyle(Color.white.opacity(0.6))
+            RemainingTimeView(stats: stats, unit: unit)
             Spacer(minLength: 6)
             ThinProgressBar(progress: stats.progress, height: 3)
             Text("\(Format.percent(stats.progress)) прожито")
@@ -50,10 +43,11 @@ struct SmallLifeView: View {
 struct MediumLifeView: View {
     let stats: LifeStats
     let quote: Quote
+    var unit: LifeUnit = .weeks
 
     var body: some View {
         HStack(spacing: 16) {
-            SmallLifeView(stats: stats)
+            SmallLifeView(stats: stats, unit: unit)
                 .frame(width: 128)
             Rectangle()
                 .fill(Color.white.opacity(0.12))
@@ -78,19 +72,14 @@ struct MediumLifeView: View {
 struct LargeLifeView: View {
     let stats: LifeStats
     let snapshot: WidgetSnapshot
+    var unit: LifeUnit = .weeks
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     WidgetCaption(text: "MEMENTO MORI")
-                    Text(Format.number(stats.remainingWeeks))
-                        .font(.system(size: 34, weight: .thin))
-                        .monospacedDigit()
-                        .widgetAccentable()
-                    Text(RussianPlural.form(stats.remainingWeeks, "неделя впереди", "недели впереди", "недель впереди"))
-                        .font(.caption2)
-                        .foregroundStyle(Color.white.opacity(0.6))
+                    RemainingTimeView(stats: stats, unit: unit, size: 34)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
@@ -153,12 +142,19 @@ struct CircularLifeView: View {
 
 struct RectangularLifeView: View {
     let stats: LifeStats
+    var unit: LifeUnit = .weeks
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Image(systemName: "hourglass")
-                Text(Format.weeks(stats.remainingWeeks))
+                Group {
+                    if unit == .seconds && !stats.isBeyondExpectancy {
+                        Text(timerInterval: stats.now...stats.deathDate, countsDown: true)
+                    } else {
+                        Text(unit.short(stats))
+                    }
+                }
                     .font(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -176,9 +172,11 @@ struct RectangularLifeView: View {
 
 struct InlineLifeView: View {
     let stats: LifeStats
+    var unit: LifeUnit = .weeks
 
     var body: some View {
-        Label(Format.weeks(stats.remainingWeeks) + " впереди", systemImage: "hourglass")
+        // Строка на экране блокировки не тикает, поэтому секунды тут показываем минутами.
+        Label((unit == .seconds ? LifeUnit.minutes : unit).short(stats) + " впереди", systemImage: "hourglass")
     }
 }
 

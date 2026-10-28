@@ -73,8 +73,13 @@ struct WidgetGalleryView: View {
         AccessoryFrame(width: 260, height: 28) {
             InlineLifeView(stats: stats)
         }
-        WidgetFrame(width: 170, height: 170) {
-            WidgetEmptyView(family: .systemSmall)
+        HStack(spacing: 20) {
+            WidgetFrame(width: 170, height: 170) {
+                SmallLifeView(stats: stats, unit: .days)
+            }
+            WidgetFrame(width: 170, height: 170) {
+                SmallLifeView(stats: stats, unit: .seconds)
+            }
         }
     }
 }

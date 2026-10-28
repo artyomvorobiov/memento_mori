@@ -6,29 +6,36 @@ import WidgetKit
 struct LifeEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot
+    var unit: LifeUnit = .weeks
 
     var stats: LifeStats? {
         snapshot.profile.map { LifeStats(profile: $0, now: date) }
     }
 }
 
-struct LifeProvider: TimelineProvider {
+struct LifeProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> LifeEntry {
         LifeEntry(date: Date(), snapshot: .sample)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (LifeEntry) -> Void) {
+    func snapshot(for configuration: LifeWidgetIntent, in context: Context) async -> LifeEntry {
         let snapshot = WidgetSnapshot.load()
         let useSample = context.isPreview && snapshot.profile == nil
-        completion(LifeEntry(date: Date(), snapshot: useSample ? .sample : snapshot))
+        return LifeEntry(date: Date(), snapshot: useSample ? .sample : snapshot, unit: configuration.unit)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<LifeEntry>) -> Void) {
+    func timeline(for configuration: LifeWidgetIntent, in context: Context) async -> Timeline<LifeEntry> {
         let snapshot = WidgetSnapshot.load()
-        let entries = WidgetSnapshot.refreshDates(from: Date(), days: 7).map { date in
-            LifeEntry(date: date, snapshot: snapshot)
+        let now = Date()
+        guard snapshot.profile != nil else {
+            // Данных пока нет — заглянем снова скоро, а не через неделю.
+            return Timeline(entries: [LifeEntry(date: now, snapshot: snapshot, unit: configuration.unit)],
+                            policy: .after(now.addingTimeInterval(15 * 60)))
         }
-        completion(Timeline(entries: entries, policy: .atEnd))
+        let entries = configuration.unit.refreshDates(from: now).map { date in
+            LifeEntry(date: date, snapshot: snapshot, unit: configuration.unit)
+        }
+        return Timeline(entries: entries, policy: .atEnd)
     }
 }
 
@@ -36,14 +43,14 @@ struct LifeProvider: TimelineProvider {
 
 struct LifeWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: WidgetKinds.life, provider: LifeProvider()) { entry in
+        AppIntentConfiguration(kind: WidgetKinds.life, intent: LifeWidgetIntent.self, provider: LifeProvider()) { entry in
             LifeWidgetView(entry: entry)
                 .containerBackground(for: .widget) {
                     Color.black
                 }
         }
         .configurationDisplayName("Время жизни")
-        .description("Сколько недель впереди и какая часть жизни уже прожита.")
+        .description("Сколько времени впереди — в годах, неделях, днях, часах или живыми секундами. Единицу можно сменить: удерживай виджет → «Изменить виджет».")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
@@ -63,17 +70,17 @@ struct LifeWidgetView: View {
         if let stats = entry.stats {
             switch family {
             case .systemMedium:
-                MediumLifeView(stats: stats, quote: Quotes.ofTheDay(entry.date))
+                MediumLifeView(stats: stats, quote: Quotes.ofTheDay(entry.date), unit: entry.unit)
             case .systemLarge:
-                LargeLifeView(stats: stats, snapshot: entry.snapshot)
+                LargeLifeView(stats: stats, snapshot: entry.snapshot, unit: entry.unit)
             case .accessoryCircular:
                 CircularLifeView(stats: stats)
             case .accessoryRectangular:
-                RectangularLifeView(stats: stats)
+                RectangularLifeView(stats: stats, unit: entry.unit)
             case .accessoryInline:
-                InlineLifeView(stats: stats)
+                InlineLifeView(stats: stats, unit: entry.unit)
             default:
-                SmallLifeView(stats: stats)
+                SmallLifeView(stats: stats, unit: entry.unit)
             }
         } else {
             WidgetEmptyView(family: family)

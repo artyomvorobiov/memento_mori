@@ -310,6 +310,9 @@ final class AppModel {
         if storageUnavailable || store.modificationDate() != lastSeenModification {
             load()
         }
+        // Виджет мог закэшировать пустое состояние (например, до настройки App Group) —
+        // пусть перечитает данные. Пока приложение открыто, это не тратит лимит обновлений.
+        WidgetCenter.shared.reloadAllTimelines()
         scheduleReminders()
     }
 
