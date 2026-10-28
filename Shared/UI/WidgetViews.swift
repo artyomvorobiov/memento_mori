@@ -256,8 +256,11 @@ struct MediumGoalView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    /// Срок цели или её «зачем».
+    /// Следующий шаг, срок цели или её «зачем».
     private var detail: String? {
+        if let step = goal.nextStep {
+            return "Дальше: \(step.title)"
+        }
         if let summary = DeadlineText.summary(for: goal, birthDate: birthDate, now: date) {
             return summary.capitalizedFirst
         }
@@ -324,14 +327,94 @@ struct WidgetEmptyView: View {
             VStack(alignment: .leading, spacing: 8) {
                 WidgetCaption(text: "MEMENTO MORI")
                 Spacer(minLength: 0)
-                Image(systemName: "hourglass")
+                Image(systemName: AppGroup.isAvailable ? "hourglass" : "exclamationmark.triangle")
                     .font(.title2)
                     .foregroundStyle(Theme.accent)
-                Text("Открой приложение, чтобы начать отсчёт")
+                Text(message)
                     .font(.caption)
                     .foregroundStyle(Color.white.opacity(0.8))
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
+    }
+
+    private var message: String {
+        if AppGroup.isAvailable {
+            return "Открой приложение, чтобы начать отсчёт"
+        }
+        return "Нет доступа к данным приложения. Включи App Groups у приложения и виджета — см. README."
+    }
+}
+
+// MARK: - «Мой мир»
+
+struct TravelMediumView: View {
+    let travel: TravelStats
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                WidgetCaption(text: "МОЙ МИР")
+                Spacer()
+                Text("\(travel.visitedCountries)")
+                    .font(.system(size: 20, weight: .light))
+                    .monospacedDigit()
+                    .widgetAccentable()
+                Text(RussianPlural.form(travel.visitedCountries, "страна", "страны", "стран") + " · " + Format.percent(travel.worldShare, digits: 0))
+                    .font(.caption2)
+                    .foregroundStyle(Color.white.opacity(0.6))
+            }
+            WorldMapView(visited: travel.visited, wished: travel.wished)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .foregroundStyle(Color.white)
+    }
+}
+
+struct TravelLargeView: View {
+    let travel: TravelStats
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            WidgetCaption(text: "МОЙ МИР")
+            WorldMapView(visited: travel.visited, wished: travel.wished)
+                .frame(maxWidth: .infinity)
+                .frame(height: 140)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(travel.visitedCountries)")
+                    .font(.system(size: 34, weight: .thin))
+                    .monospacedDigit()
+                    .widgetAccentable()
+                Text(RussianPlural.form(travel.visitedCountries, "страна", "страны", "стран"))
+                    .font(.subheadline)
+                Spacer()
+                Text(Format.percent(travel.worldShare, digits: 0) + " мира")
+                    .font(.subheadline.weight(.light))
+                    .foregroundStyle(Theme.accent)
+            }
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(Continent.allCases) { continent in
+                    let progress = travel.progress(for: continent)
+                    HStack(spacing: 8) {
+                        Text(continent.title)
+                            .font(.system(size: 11))
+                            .frame(width: 112, alignment: .leading)
+                        ThinProgressBar(
+                            progress: progress.total > 0 ? Double(progress.visited) / Double(progress.total) : 0,
+                            height: 3,
+                            fill: Theme.accent
+                        )
+                        Text("\(progress.visited)/\(progress.total)")
+                            .font(.system(size: 11))
+                            .monospacedDigit()
+                            .frame(width: 38, alignment: .trailing)
+                    }
+                    .foregroundStyle(progress.visited > 0 ? Color.white : Color.white.opacity(0.45))
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Color.white)
     }
 }

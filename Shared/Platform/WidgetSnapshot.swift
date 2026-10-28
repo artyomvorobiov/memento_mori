@@ -4,10 +4,19 @@ import Foundation
 struct WidgetSnapshot {
     let profile: Profile?
     let goals: [Goal]
+    var visitedCountries: [String] = []
 
     static func load() -> WidgetSnapshot {
         let data = try? DataStore.shared.load()
-        return WidgetSnapshot(profile: data?.profile, goals: data?.goals ?? [])
+        return WidgetSnapshot(
+            profile: data?.profile,
+            goals: data?.goals ?? [],
+            visitedCountries: data?.visitedCountries ?? []
+        )
+    }
+
+    var travel: TravelStats {
+        TravelStats(visited: visitedCountries, wished: activeGoals.compactMap(\.countryCode))
     }
 
     var activeGoals: [Goal] {
@@ -48,6 +57,6 @@ struct WidgetSnapshot {
     /// Пример для галереи виджетов и отладочных превью.
     static var sample: WidgetSnapshot {
         let data = DemoData.make()
-        return WidgetSnapshot(profile: data.profile, goals: data.goals)
+        return WidgetSnapshot(profile: data.profile, goals: data.goals, visitedCountries: data.visitedCountries)
     }
 }

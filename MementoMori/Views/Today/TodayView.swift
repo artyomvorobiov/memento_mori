@@ -247,6 +247,12 @@ struct FocusSection: View {
                     Text(goal.title)
                         .foregroundStyle(Color.white)
                         .multilineTextAlignment(.leading)
+                    if let step = goal.nextStep {
+                        Text("Дальше: \(step.title)")
+                            .font(.caption)
+                            .foregroundStyle(Theme.accent)
+                            .lineLimit(1)
+                    }
                     if let summary = DeadlineText.summary(for: goal, birthDate: model.profile?.birthDate) {
                         Text(summary)
                             .font(.caption)

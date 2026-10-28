@@ -296,7 +296,7 @@ struct WeekInfoCard: View {
                 .accessibilityLabel("Закрыть")
             }
             if let range = stats.dateRange(forGridIndex: index) {
-                Text("\(Format.shortDate(range.lowerBound)) — \(Format.shortDate(range.upperBound)) · \(Format.years(stats.age(forGridIndex: index)))")
+                Text("\(Format.weekRange(range.lowerBound, range.upperBound)) · \(Format.years(stats.age(forGridIndex: index)))")
                     .font(.subheadline)
                     .foregroundStyle(Theme.secondaryText)
             }

@@ -56,6 +56,30 @@ enum GoalCategory: String, Codable, CaseIterable, Identifiable, Hashable {
 
 // MARK: - Цель
 
+/// Шаг на пути к цели: «Сделать визу», «Купить билеты».
+struct GoalStep: Identifiable, Codable, Hashable {
+    var id: UUID
+    var title: String
+    var isDone: Bool
+
+    init(id: UUID = UUID(), title: String, isDone: Bool = false) {
+        self.id = id
+        self.title = title
+        self.isDone = isDone
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, isDone
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+        isDone = try c.decodeIfPresent(Bool.self, forKey: .isDone) ?? false
+    }
+}
+
 struct Goal: Identifiable, Codable, Hashable {
     var id: UUID
     var title: String
@@ -75,6 +99,8 @@ struct Goal: Identifiable, Codable, Hashable {
     var photoFileName: String?
     /// ISO-код страны для целей-путешествий.
     var countryCode: String?
+    /// Шаги к цели.
+    var steps: [GoalStep]
 
     init(
         id: UUID = UUID(),
@@ -88,7 +114,8 @@ struct Goal: Identifiable, Codable, Hashable {
         completedAt: Date? = nil,
         reflection: String = "",
         photoFileName: String? = nil,
-        countryCode: String? = nil
+        countryCode: String? = nil,
+        steps: [GoalStep] = []
     ) {
         self.id = id
         self.title = title
@@ -102,9 +129,15 @@ struct Goal: Identifiable, Codable, Hashable {
         self.reflection = reflection
         self.photoFileName = photoFileName
         self.countryCode = countryCode
+        self.steps = steps
     }
 
     var isCompleted: Bool { completedAt != nil }
+
+    var completedStepsCount: Int { steps.filter(\.isDone).count }
+
+    /// Первый невыполненный шаг — «что делать дальше».
+    var nextStep: GoalStep? { steps.first { !$0.isDone } }
 
     var hasDeadline: Bool { targetAge != nil || targetDate != nil }
 
@@ -117,7 +150,7 @@ struct Goal: Identifiable, Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, title, category, note, targetAge, targetDate, isFocused
-        case createdAt, completedAt, reflection, photoFileName, countryCode
+        case createdAt, completedAt, reflection, photoFileName, countryCode, steps
     }
 
     init(from decoder: Decoder) throws {
@@ -134,6 +167,7 @@ struct Goal: Identifiable, Codable, Hashable {
         reflection = try c.decodeIfPresent(String.self, forKey: .reflection) ?? ""
         photoFileName = try c.decodeIfPresent(String.self, forKey: .photoFileName)
         countryCode = try c.decodeIfPresent(String.self, forKey: .countryCode)
+        steps = try c.decodeIfPresent([GoalStep].self, forKey: .steps) ?? []
     }
 }
 
@@ -401,6 +435,13 @@ extension AppData {
     mutating func upsert(_ goal: Goal) {
         var goal = goal
         goal.title = goal.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        goal.steps = goal.steps
+            .map { step in
+                var step = step
+                step.title = step.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                return step
+            }
+            .filter { !$0.title.isEmpty }
         if goal.isFocused && (goal.isCompleted || !canFocus(excluding: goal.id)) {
             goal.isFocused = false
         }
@@ -426,6 +467,13 @@ extension AppData {
         if let code = goals[index].countryCode {
             markVisited(code, true)
         }
+    }
+
+    mutating func toggleStep(goalID: UUID, stepID: UUID) {
+        guard let goalIndex = goals.firstIndex(where: { $0.id == goalID }),
+              let stepIndex = goals[goalIndex].steps.firstIndex(where: { $0.id == stepID })
+        else { return }
+        goals[goalIndex].steps[stepIndex].isDone.toggle()
     }
 
     mutating func reopenGoal(id: UUID) {

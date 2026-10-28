@@ -1,24 +1,21 @@
 import Foundation
 
-/// Общий контейнер приложения и виджета.
+/// Общий контейнер приложения и виджета (App Group).
 ///
-/// Идентификатор группы выводится из bundle id: приложение `com.name.mementomori`
-/// и виджет `com.name.mementomori.widget` → группа `group.com.name.mementomori`.
-/// Такая же строка должна стоять в обоих файлах .entitlements (см. README).
+/// Идентификатор группы не зашит в код: берём тот, на который приложение реально подписано.
+/// Так виджет продолжает видеть данные, даже если bundle id поменяли прямо в Xcode,
+/// а не скриптом scripts/set-bundle-id.sh.
 enum AppGroup {
-    static let widgetSuffix = ".widget"
+    static let templateIdentifier = "group.com.yourname.mementomori"
 
-    static var identifier: String {
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.yourname.mementomori"
-        let base = bundleID.hasSuffix(widgetSuffix) ? String(bundleID.dropLast(widgetSuffix.count)) : bundleID
-        return "group." + base
-    }
+    /// Группа, к которой есть доступ, или наиболее вероятная — для сообщений об ошибке.
+    static let identifier: String = resolveIdentifier()
 
     static var containerURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
     }
 
-    /// false — App Group не настроен, и виджет не увидит данные приложения.
+    /// false — App Group не подключён, и виджет не увидит данные приложения.
     static var isAvailable: Bool { containerURL != nil }
 
     static var dataDirectory: URL {
@@ -37,6 +34,47 @@ enum AppGroup {
 
     static var defaults: UserDefaults {
         UserDefaults(suiteName: identifier) ?? .standard
+    }
+
+    // MARK: - Определение группы
+
+    /// Кандидаты по порядку: группы из профиля подписи, группа от bundle id приложения, группа из шаблона.
+    static var candidates: [String] {
+        var result = provisionedGroups()
+        result.append("group." + containingAppBundleID)
+        result.append(templateIdentifier)
+        var seen = Set<String>()
+        return result.filter { seen.insert($0).inserted }
+    }
+
+    private static func resolveIdentifier() -> String {
+        let all = candidates
+        let manager = FileManager.default
+        return all.first { manager.containerURL(forSecurityApplicationGroupIdentifier: $0) != nil } ?? all.first ?? templateIdentifier
+    }
+
+    /// Bundle id приложения: у виджета это его собственный id без последнего компонента.
+    private static var containingAppBundleID: String {
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.yourname.mementomori"
+        guard Bundle.main.bundleURL.pathExtension == "appex",
+              let dot = bundleID.lastIndex(of: ".")
+        else { return bundleID }
+        return String(bundleID[..<dot])
+    }
+
+    /// App Groups из встроенного профиля подписи (есть в сборках для своего iPhone).
+    private static func provisionedGroups() -> [String] {
+        guard let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+              let data = try? Data(contentsOf: url),
+              let start = data.range(of: Data("<?xml".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex)
+        else { return [] }
+        let plistData = data.subdata(in: start.lowerBound..<end.upperBound)
+        guard let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any],
+              let groups = entitlements["com.apple.security.application-groups"] as? [String]
+        else { return [] }
+        return groups
     }
 }
 

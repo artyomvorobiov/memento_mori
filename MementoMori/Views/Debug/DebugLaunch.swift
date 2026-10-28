@@ -4,10 +4,11 @@ import Foundation
 ///
 /// В Xcode: Product → Scheme → Edit Scheme… → Run → Arguments, например:
 ///   -MementoDemo                  демонстрационные данные (настоящие не трогаются)
-///   -MementoWidgetGallery 1       галерея виджетов (страницы 1 и 2)
+///   -MementoWidgetGallery 1       галерея виджетов (страницы 1, 2 и 3)
 ///   -MementoOnboardingStep 1      открыть знакомство на нужном шаге
 ///   -MementoScrollToBottom YES    открыть «Сегодня» прокрученным вниз
-///   -selectedTab 2                открыть нужную вкладку (0, 1, 2)
+///   -MementoNewGoal "текст"       открыть создание цели с готовым названием
+///   -selectedTab 2                открыть нужную вкладку (0 — «Сегодня», 1 — «Цели», 2 — «Мир», 3 — «Жизнь»)
 enum DebugLaunch {
     static var isDemo: Bool {
         #if DEBUG
@@ -31,6 +32,14 @@ enum DebugLaunch {
         return UserDefaults.standard.integer(forKey: "MementoOnboardingStep")
         #else
         return 0
+        #endif
+    }
+
+    static var newGoalTitle: String? {
+        #if DEBUG
+        return UserDefaults.standard.string(forKey: "MementoNewGoal")
+        #else
+        return nil
         #endif
     }
 

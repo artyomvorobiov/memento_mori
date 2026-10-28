@@ -30,6 +30,9 @@ struct GoalDetailView: View {
                 if goal.isCompleted {
                     memory(goal)
                 }
+                if !goal.steps.isEmpty {
+                    stepsCard(goal)
+                }
                 if goal.hasDeadline {
                     deadlineCard(goal)
                 }
@@ -127,6 +130,36 @@ struct GoalDetailView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func stepsCard(_ goal: Goal) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "Шаги", trailing: "\(goal.completedStepsCount) из \(goal.steps.count)")
+            ForEach(goal.steps) { step in
+                Button {
+                    model.toggleStep(goalID: goal.id, stepID: step.id)
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Image(systemName: step.isDone ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(step.isDone ? Theme.accent : Theme.tertiaryText)
+                        Text(step.title)
+                            .strikethrough(step.isDone, color: Theme.tertiaryText)
+                            .foregroundStyle(step.isDone ? Theme.secondaryText : Color.white)
+                            .multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            ThinProgressBar(
+                progress: Double(goal.completedStepsCount) / Double(max(1, goal.steps.count)),
+                height: 3,
+                fill: Theme.accent
+            )
+        }
+        .mementoCard()
+        .sensoryFeedback(.success, trigger: goal.completedStepsCount) { old, new in new > old }
     }
 
     private func deadlineCard(_ goal: Goal) -> some View {

@@ -18,8 +18,10 @@ enum DemoData {
         data.profile = Profile(birthDate: birthDate, lifeExpectancy: 82, createdAt: daysAgo(210))
 
         data.goals = [
-            Goal(title: "Увидеть северное сияние", category: .travel, note: "Мечтаю об этом с детства — пора перестать мечтать и поехать.", targetAge: 36, isFocused: true, createdAt: daysAgo(200)),
-            Goal(title: "Выучить испанский до разговорного уровня", category: .skills, targetDate: daysAhead(320), isFocused: true, createdAt: daysAgo(190)),
+            Goal(title: "Увидеть северное сияние", category: .travel, note: "Мечтаю об этом с детства — пора перестать мечтать и поехать.", targetAge: 36, isFocused: true, createdAt: daysAgo(200),
+                 steps: [GoalStep(title: "Выбрать: Мурманск или Норвегия", isDone: true), GoalStep(title: "Купить билеты на февраль"), GoalStep(title: "Тёплые ботинки")]),
+            Goal(title: "Выучить испанский до разговорного уровня", category: .skills, targetDate: daysAhead(320), isFocused: true, createdAt: daysAgo(190),
+                 steps: [GoalStep(title: "Найти преподавателя", isDone: true), GoalStep(title: "Заниматься 3 раза в неделю", isDone: true), GoalStep(title: "Посмотреть сериал без субтитров")]),
             Goal(title: "Пробежать марафон", category: .body, note: "Доказать себе, что могу.", targetAge: 40, isFocused: true, createdAt: daysAgo(180)),
             Goal(title: "Япония", category: .travel, createdAt: daysAgo(170), countryCode: "JP"),
             Goal(title: "Исландия", category: .travel, createdAt: daysAgo(160), countryCode: "IS"),

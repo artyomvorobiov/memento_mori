@@ -39,6 +39,8 @@ struct RootView: View {
 }
 
 struct MainTabView: View {
+    static let worldTab = 2
+
     @Environment(AppModel.self) private var model
     @AppStorage("selectedTab") private var selectedTab = 0
 
@@ -50,9 +52,12 @@ struct MainTabView: View {
             GoalsView()
                 .tabItem { Label("Цели", systemImage: "checklist") }
                 .tag(1)
+            WorldView()
+                .tabItem { Label("Мир", systemImage: "globe.europe.africa.fill") }
+                .tag(Self.worldTab)
             LifeCalendarView()
                 .tabItem { Label("Жизнь", systemImage: "square.grid.3x3.fill") }
-                .tag(2)
+                .tag(3)
         }
         .sensoryFeedback(.success, trigger: model.data.completedGoals.count) { old, new in
             new > old

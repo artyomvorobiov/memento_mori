@@ -23,7 +23,7 @@ API_URL = (
 )
 WORLD_ID = "1W"
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-COUNTRIES_SWIFT = ROOT / "MementoMori" / "Content" / "Countries.swift"
+COUNTRIES_SWIFT = ROOT / "Shared" / "Core" / "Countries.swift"
 OUTPUT_SWIFT = ROOT / "Shared" / "Core" / "LifeExpectancyData.swift"
 
 

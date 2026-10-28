@@ -60,11 +60,34 @@ struct LifeStats {
         return max(0, calendar.dateComponents([.month], from: now, to: deathDate).month ?? 0)
     }
     var remainingDays: Int { Int(remainingSeconds / Self.secondsPerDay) }
-    var remainingWeeks: Int { remainingDays / 7 }
     var remainingHours: Int { Int(remainingSeconds / 3_600) }
 
-    var totalWeeks: Int { Int(totalSeconds / Self.secondsPerDay) / 7 }
-    var livedWeeks: Int { Int(livedSeconds / Self.secondsPerDay) / 7 }
+    // Недели — календарные, с понедельника по воскресенье: счётчик уменьшается в ночь на понедельник.
+
+    /// Сколько недель впереди, считая текущую неделю прожитой.
+    var remainingWeeks: Int {
+        guard now < deathDate else { return 0 }
+        return weeks(from: weekStart(max(now, birthDate)), to: weekStart(deathDate))
+    }
+
+    /// Сколько полных недель прожито с недели рождения.
+    var livedWeeks: Int {
+        guard now > birthDate else { return 0 }
+        return weeks(from: weekStart(birthDate), to: weekStart(min(now, deathDate)))
+    }
+
+    var totalWeeks: Int {
+        weeks(from: weekStart(birthDate), to: weekStart(deathDate))
+    }
+
+    /// Понедельник 00:00 недели, в которую попадает дата.
+    func weekStart(_ date: Date) -> Date {
+        calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
+    }
+
+    private func weeks(from start: Date, to end: Date) -> Int {
+        max(0, (calendar.dateComponents([.day], from: start, to: end).day ?? 0) / 7)
+    }
 
     // MARK: «Осталось примерно»
 
@@ -96,16 +119,24 @@ struct LifeStats {
     var gridRows: Int { lifeExpectancy }
     var gridCellCount: Int { gridRows * Self.weeksPerRow }
 
+    /// Начало строки возраста row: понедельник недели, на которую выпал день рождения.
+    func rowStart(_ row: Int) -> Date? {
+        calendar.date(byAdding: .year, value: row, to: birthDate).map(weekStart)
+    }
+
     /// Клетка сетки, на которую приходится дата (nil — до рождения или за пределами сетки).
+    /// Клетка — календарная неделя с понедельника; строка — год жизни.
     func gridIndex(for date: Date) -> Int? {
         guard date >= birthDate else { return nil }
-        let years = calendar.dateComponents([.year], from: birthDate, to: date).year ?? 0
-        guard years >= 0, years < gridRows,
-              let lastBirthday = calendar.date(byAdding: .year, value: years, to: birthDate)
-        else { return nil }
-        let days = calendar.dateComponents([.day], from: lastBirthday, to: date).day ?? 0
+        var row = max(0, calendar.dateComponents([.year], from: birthDate, to: date).year ?? 0)
+        // Неделя следующего дня рождения уже относится к следующей строке.
+        if let next = rowStart(row + 1), date >= next {
+            row += 1
+        }
+        guard row < gridRows, let start = rowStart(row) else { return nil }
+        let days = calendar.dateComponents([.day], from: start, to: date).day ?? 0
         let week = min(Self.weeksPerRow - 1, max(0, days / 7))
-        return years * Self.weeksPerRow + week
+        return row * Self.weeksPerRow + week
     }
 
     var currentGridIndex: Int? { gridIndex(for: now) }
@@ -116,18 +147,18 @@ struct LifeStats {
         return now < birthDate ? 0 : gridCellCount
     }
 
-    /// Диапазон дат клетки. Последняя неделя года поглощает лишние 1–2 дня.
+    /// Диапазон дат клетки: с понедельника по воскресенье.
+    /// Если в году жизни выпало 53 недели, последняя клетка строки охватывает две.
     func dateRange(forGridIndex index: Int) -> ClosedRange<Date>? {
         guard index >= 0, index < gridCellCount else { return nil }
         let row = index / Self.weeksPerRow
         let column = index % Self.weeksPerRow
-        guard let rowStart = calendar.date(byAdding: .year, value: row, to: birthDate),
-              let start = calendar.date(byAdding: .day, value: column * 7, to: rowStart)
+        guard let rowBegin = rowStart(row),
+              let start = calendar.date(byAdding: .day, value: column * 7, to: rowBegin)
         else { return nil }
         let end: Date?
         if column == Self.weeksPerRow - 1 {
-            end = calendar.date(byAdding: .year, value: row + 1, to: birthDate)
-                .flatMap { calendar.date(byAdding: .second, value: -1, to: $0) }
+            end = rowStart(row + 1).flatMap { calendar.date(byAdding: .second, value: -1, to: $0) }
         } else {
             end = calendar.date(byAdding: .day, value: 7, to: start)
                 .flatMap { calendar.date(byAdding: .second, value: -1, to: $0) }

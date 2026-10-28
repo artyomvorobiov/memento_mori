@@ -81,10 +81,13 @@ shot 02-onboarding-life -MementoOnboardingStep 1 -AppleLocale ru_RU
 shot 03-today -MementoDemo -selectedTab 0
 shot 04-today-more -MementoDemo -selectedTab 0 -MementoScrollToBottom YES
 shot 05-goals -MementoDemo -selectedTab 1
-shot 06-life-weeks -MementoDemo -selectedTab 2 -lifeCalendarMode weeks
-shot 07-life-years -MementoDemo -selectedTab 2 -lifeCalendarMode years
+shot 06-life-weeks -MementoDemo -selectedTab 3 -lifeCalendarMode weeks
+shot 07-life-years -MementoDemo -selectedTab 3 -lifeCalendarMode years
 shot 08-widgets -MementoDemo -MementoWidgetGallery 1
 shot 09-widgets-more -MementoDemo -MementoWidgetGallery 2
+shot 10-world -MementoDemo -selectedTab 2 -AppleLocale ru_RU
+shot 11-widgets-travel -MementoDemo -MementoWidgetGallery 3
+shot 12-new-goal -MementoDemo -selectedTab 1 -MementoNewGoal "Поехать в Японию"
 xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
 
 # Уменьшаем, чтобы README не был тяжёлым.

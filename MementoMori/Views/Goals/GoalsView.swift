@@ -14,7 +14,7 @@ struct GoalsView: View {
     @State private var searchText = ""
     @State private var showNewGoal = false
     @State private var showIdeas = false
-    @State private var showCountries = false
+    @AppStorage("selectedTab") private var selectedTab = 0
     @State private var completingGoal: Goal?
     @State private var showFocusLimit = false
 
@@ -57,13 +57,13 @@ struct GoalsView: View {
                 GoalDetailView(goalID: id)
             }
             .sheet(isPresented: $showNewGoal) {
-                GoalEditorView(goal: nil, presetCategory: categoryFilter)
+                GoalEditorView(goal: nil, presetCategory: categoryFilter, initialTitle: DebugLaunch.newGoalTitle ?? "")
+            }
+            .onAppear {
+                if DebugLaunch.newGoalTitle != nil { showNewGoal = true }
             }
             .sheet(isPresented: $showIdeas) {
                 IdeasView()
-            }
-            .sheet(isPresented: $showCountries) {
-                CountriesView()
             }
             .sheet(item: $completingGoal) { goal in
                 CompleteGoalSheet(goal: goal)
@@ -214,9 +214,9 @@ struct GoalsView: View {
                 Label("Библиотека идей", systemImage: "lightbulb")
             }
             Button {
-                showCountries = true
+                selectedTab = MainTabView.worldTab
             } label: {
-                Label("Страны мира", systemImage: "globe.europe.africa")
+                Label("Страны на карте", systemImage: "globe.europe.africa")
             }
         } label: {
             Image(systemName: "plus")
@@ -266,6 +266,11 @@ struct GoalRow: View {
                     Text(summary)
                         .font(.caption)
                         .foregroundStyle(DeadlineText.isOverdue(goal, birthDate: birthDate) ? Theme.accent : Theme.secondaryText)
+                }
+                if !goal.steps.isEmpty {
+                    Label("\(goal.completedStepsCount) из \(Format.genitive(goal.steps.count, "шага", "шагов"))", systemImage: "checklist")
+                        .font(.caption)
+                        .foregroundStyle(Theme.tertiaryText)
                 }
             }
             Spacer(minLength: 8)

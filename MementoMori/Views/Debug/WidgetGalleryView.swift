@@ -20,10 +20,10 @@ struct WidgetGalleryView: View {
                 let stats = LifeStats(profile: profile)
                 let goal = snapshot.focusedGoals.first ?? snapshot.activeGoals.first
                 VStack(spacing: 20) {
-                    if page == 1 {
-                        firstPage(stats: stats, goal: goal)
-                    } else {
-                        secondPage(stats: stats)
+                    switch page {
+                    case 1: firstPage(stats: stats, goal: goal)
+                    case 2: secondPage(stats: stats)
+                    default: travelPage
                     }
                 }
             }
@@ -75,6 +75,18 @@ struct WidgetGalleryView: View {
         }
         WidgetFrame(width: 170, height: 170) {
             WidgetEmptyView(family: .systemSmall)
+        }
+    }
+}
+
+extension WidgetGalleryView {
+    @ViewBuilder
+    var travelPage: some View {
+        WidgetFrame(width: 360, height: 170) {
+            TravelMediumView(travel: snapshot.travel)
+        }
+        WidgetFrame(width: 360, height: 380) {
+            TravelLargeView(travel: snapshot.travel)
         }
     }
 }

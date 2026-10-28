@@ -6,5 +6,6 @@ struct MementoWidgetBundle: WidgetBundle {
     var body: some Widget {
         LifeWidget()
         GoalWidget()
+        TravelWidget()
     }
 }

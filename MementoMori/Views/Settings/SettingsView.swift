@@ -175,10 +175,18 @@ struct SettingsView: View {
             Text("Удерживай палец на свободном месте главного экрана → «Изменить» → «Добавить виджет» → Memento Mori. Для экрана блокировки: удерживай палец на заблокированном экране → «Настроить».")
                 .font(.footnote)
                 .foregroundStyle(Theme.secondaryText)
-            if !AppGroup.isAvailable {
-                Label("App Group не настроен — виджеты не увидят данные. Инструкция в README проекта.", systemImage: "exclamationmark.triangle")
+            if AppGroup.isAvailable {
+                Label("Виджеты видят данные · \(AppGroup.identifier)", systemImage: "checkmark.circle")
                     .font(.footnote)
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.secondaryText)
+            } else {
+                Label {
+                    Text("Виджеты не видят данные: у приложения нет доступа к App Group «\(AppGroup.identifier)». В Xcode открой Signing & Capabilities у таргетов MementoMori и MementoWidgetExtension и включи одну и ту же группу в App Groups. Подробнее — в README.")
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle")
+                }
+                .font(.footnote)
+                .foregroundStyle(Theme.accent)
             }
         } header: {
             Text("Виджеты")

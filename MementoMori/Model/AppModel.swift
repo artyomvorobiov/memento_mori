@@ -194,6 +194,10 @@ final class AppModel {
         }
     }
 
+    func toggleStep(goalID: UUID, stepID: UUID) {
+        update { $0.toggleStep(goalID: goalID, stepID: stepID) }
+    }
+
     func reopenGoal(id: UUID) {
         update { $0.reopenGoal(id: id) }
     }

@@ -62,6 +62,24 @@ struct ShareCardView: View {
 
 struct ShareCardSheet: View {
     @Environment(AppModel.self) private var model
+
+    var body: some View {
+        if let stats = model.stats() {
+            RenderedShareSheet(title: "Карточка") {
+                ShareCardView(
+                    stats: stats,
+                    completedCount: model.data.completedGoals.count,
+                    quote: Quotes.ofTheDay()
+                )
+            }
+        }
+    }
+}
+
+/// Лист «Поделиться»: рисует карточку в картинку и отдаёт её системному меню.
+struct RenderedShareSheet<Card: View>: View {
+    let title: String
+    @ViewBuilder let card: () -> Card
     @Environment(\.dismiss) private var dismiss
     @State private var image: UIImage?
 
@@ -93,7 +111,7 @@ struct ShareCardSheet: View {
             }
             .frame(maxWidth: .infinity)
             .background(Theme.background)
-            .navigationTitle("Карточка")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -108,13 +126,7 @@ struct ShareCardSheet: View {
 
     @MainActor
     private func render() {
-        guard let stats = model.stats() else { return }
-        let card = ShareCardView(
-            stats: stats,
-            completedCount: model.data.completedGoals.count,
-            quote: Quotes.ofTheDay()
-        )
-        let renderer = ImageRenderer(content: card)
+        let renderer = ImageRenderer(content: card())
         renderer.scale = 3
         image = renderer.uiImage
     }

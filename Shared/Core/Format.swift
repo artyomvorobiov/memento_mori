@@ -87,6 +87,13 @@ enum Format {
         date.formatted(.dateTime.day().month(.abbreviated).year().locale(locale))
     }
 
+    /// «пн, 26 окт. — вс, 1 нояб. 2026»
+    static func weekRange(_ start: Date, _ end: Date) -> String {
+        let first = start.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(locale))
+        let last = end.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year().locale(locale))
+        return "\(first) — \(last)".lowercased()
+    }
+
     /// «март 2026»
     static func monthYear(_ date: Date) -> String {
         date.formatted(.dateTime.month(.wide).year().locale(locale))
