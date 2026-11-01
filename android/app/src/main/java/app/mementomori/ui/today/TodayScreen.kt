@@ -359,7 +359,7 @@ private fun LivingCounterTile(
                 if (days == null) "нажми +, когда случится" else "последний раз — " + Format.daysAgo(days),
                 color = if (counter.isOverdue(now)) Palette.accent else Palette.tertiaryText,
                 fontSize = 11.sp,
-                maxLines = 1,
+                maxLines = 2,
             )
         }
         Box(

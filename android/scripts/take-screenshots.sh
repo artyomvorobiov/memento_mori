@@ -52,4 +52,8 @@ shot 11-life-years --ei tab 3 --es lifeMode years
 gallery 12-widgets 1
 gallery 13-widgets-more 2
 adb shell am force-stop "$PKG"
+# Уменьшаем, чтобы README не был тяжёлым.
+if command -v mogrify > /dev/null; then
+  mogrify -resize 540x "$OUT"/*.png
+fi
 echo "Готово: $OUT"

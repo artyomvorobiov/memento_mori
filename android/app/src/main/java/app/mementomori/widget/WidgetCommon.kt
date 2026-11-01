@@ -92,7 +92,7 @@ fun WidgetButton(title: String, prominent: Boolean, action: Action, modifier: Gl
         modifier
             .background(if (prominent) WidgetColors.accent else Color.White.copy(alpha = 0.12f))
             .cornerRadius(18.dp)
-            .padding(horizontal = 10.dp, vertical = 7.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
             .clickable(action),
         contentAlignment = Alignment.Center,
     ) {

@@ -124,10 +124,12 @@ private fun GoalContent(data: AppData, shuffle: Int) {
             }
             Spacer(GlanceModifier.height(6.dp))
             Column(GlanceModifier.defaultWeight().fillMaxWidth().clickable(openApp(context))) {
-                SerifText(goal.title, if (wide) 17.sp else 15.sp, maxLines = if (wide) 2 else 4)
-                detail(goal, data)?.let {
-                    Spacer(GlanceModifier.height(4.dp))
-                    Small(it, WidgetColors.secondary, 12.sp, maxLines = 2)
+                SerifText(goal.title, if (wide) 17.sp else 14.sp, maxLines = if (wide) 2 else 3)
+                if (wide) {
+                    detail(goal, data)?.let {
+                        Spacer(GlanceModifier.height(4.dp))
+                        Small(it, WidgetColors.secondary, 12.sp, maxLines = 2)
+                    }
                 }
             }
             Row(GlanceModifier.fillMaxWidth()) {
@@ -258,9 +260,9 @@ private fun CountersContent(data: AppData) {
                 Spacer(GlanceModifier.defaultWeight())
                 Column(GlanceModifier.clickable(openApp(context, "mementomori://counter/${counter.id}"))) {
                     DaysAgo(counter, now)
-                    Small(counterRemainingText(counter, stats), WidgetColors.secondary, 11.sp, maxLines = 2)
+                    Small(counterRemainingText(counter, stats), WidgetColors.tertiary, 10.sp, maxLines = 1)
                 }
-                Spacer(GlanceModifier.height(6.dp))
+                Spacer(GlanceModifier.height(4.dp))
                 LogButton(counter, now, compact = false, GlanceModifier.fillMaxWidth())
             }
         }
@@ -274,7 +276,7 @@ private fun DaysAgo(counter: LifeCounter, now: Instant) {
     when {
         days == null -> Small("ещё не было", WidgetColors.text, 18.sp)
         days > 1 -> {
-            BigNumber(Format.number(days), 34.sp, color)
+            BigNumber(Format.number(days), 30.sp, color)
             Small(RussianPlural.form(days, "день назад", "дня назад", "дней назад"), WidgetColors.secondary, 11.sp)
         }
         else -> BigNumber(Format.daysAgo(days), 26.sp, color)
@@ -284,7 +286,7 @@ private fun DaysAgo(counter: LifeCounter, now: Instant) {
 @Composable
 private fun CounterRow(counter: LifeCounter, stats: LifeStats, now: Instant) {
     val context = LocalContext.current
-    Row(GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(GlanceModifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Small(counter.emoji, WidgetColors.text, 17.sp)
         Spacer(GlanceModifier.width(10.dp))
         Column(GlanceModifier.defaultWeight().clickable(openApp(context, "mementomori://counter/${counter.id}"))) {

@@ -133,7 +133,7 @@ private fun LargeLife(stats: LifeStats, data: AppData, unit: LifeUnit) {
             }
         }
         Spacer(GlanceModifier.height(10.dp))
-        val gridHeight = (size.height.value - 170).coerceAtLeast(80f)
+        val gridHeight = (size.height.value - 215).coerceAtLeast(80f)
         val bitmap = YearsBitmap.render(stats, ((size.width.value - 28) * 2).toInt().coerceAtLeast(100), (gridHeight * 2).toInt())
         Image(ImageProvider(bitmap), contentDescription = "Жизнь в годах", modifier = GlanceModifier.fillMaxWidth().height(gridHeight.dp))
         Spacer(GlanceModifier.height(10.dp))
