@@ -1,0 +1,46 @@
+name: Android build
+
+on:
+  push:
+    paths:
+      - "android/**"
+      - "Shared/Resources/**"
+      - "MementoMori/Resources/**"
+      - ".github/workflows/android-build.yml"
+  pull_request:
+    paths:
+      - "android/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Tests and APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests of shared logic
+        run: ./gradlew :core:test --stacktrace
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Build release (minified, unsigned)
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      # Готовый APK можно скачать со страницы запуска (Artifacts) и поставить на телефон.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memento-mori-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

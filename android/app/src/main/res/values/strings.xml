@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Memento Mori</string>
+    <string name="widget_life_description">Сколько времени впереди и какая часть жизни уже прожита.</string>
+    <string name="widget_goal_description">Одна цель из твоего списка. Отметь её выполненной прямо с экрана.</string>
+    <string name="widget_travel_description">Карта стран, где ты уже побывал(а) и куда собираешься.</string>
+    <string name="widget_counters_description">Сколько дней прошло с последней встречи, отпуска или книги — и кнопка «Было» прямо на экране.</string>
+    <string name="widget_letter_description">Сколько дней осталось до письма себе в будущее.</string>
+    <string name="notification_channel_reminders">Напоминания</string>
+    <string name="notification_channel_reminders_description">Мысль дня, цели, письма в будущее и «давно не было».</string>
+</resources>

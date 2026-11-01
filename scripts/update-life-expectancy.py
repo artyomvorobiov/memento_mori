@@ -2,8 +2,9 @@
 """Обновляет таблицу средней продолжительности жизни по странам.
 
 Берёт свежие данные Всемирного банка (показатель SP.DYN.LE00.IN — ожидаемая
-продолжительность жизни при рождении, оба пола) и перезаписывает файл
-Shared/Core/LifeExpectancyData.swift. Сторонние библиотеки не нужны.
+продолжительность жизни при рождении, оба пола) и перезаписывает файлы
+Shared/Core/LifeExpectancyData.swift (iPhone) и android/core/.../LifeExpectancyData.kt (Android).
+Сторонние библиотеки не нужны.
 
 Использование:
     python3 scripts/update-life-expectancy.py
@@ -25,6 +26,7 @@ WORLD_ID = "1W"
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COUNTRIES_SWIFT = ROOT / "Shared" / "Core" / "Countries.swift"
 OUTPUT_SWIFT = ROOT / "Shared" / "Core" / "LifeExpectancyData.swift"
+OUTPUT_KOTLIN = ROOT / "android" / "core" / "src" / "main" / "kotlin" / "app" / "mementomori" / "core" / "LifeExpectancyData.kt"
 
 
 def load_rows(input_path):
@@ -93,6 +95,43 @@ enum LifeExpectancyData {{
 '''
 
 
+def render_kotlin(entries, world, year, missing):
+    items = list(sorted(entries.items()))
+    lines = "\n".join(
+        "        " + ", ".join(f'"{code}" to {value:.1f}' for code, value in items[i:i + 6]) + ","
+        for i in range(0, len(items), 6)
+    )
+    missing_note = ", ".join(missing) if missing else "нет"
+    return f'''package app.mementomori.core
+
+/**
+ * Ожидаемая продолжительность жизни при рождении (оба пола), лет.
+ *
+ * Источник: Всемирный банк, World Development Indicators, показатель SP.DYN.LE00.IN,
+ * данные за {year} год. Лицензия CC BY 4.0: https://datacatalog.worldbank.org/public-licenses
+ * Файл сгенерирован скриптом scripts/update-life-expectancy.py.
+ * Стран из каталога без данных: {missing_note}.
+ */
+object LifeExpectancyData {{
+    const val YEAR = {year}
+    const val ATTRIBUTION = "Данные: Всемирный банк (World Development Indicators), {year} год, CC BY 4.0."
+
+    /** Код «весь мир» (UN M49) — среднее по планете. */
+    const val WORLD_CODE = "001"
+    const val WORLD = {world:.1f}
+
+    val byCountry: Map<String, Double> = mapOf(
+{lines}
+    )
+
+    /** Средняя продолжительность жизни для страны (или для всего мира по коду 001). */
+    fun value(code: String): Double? = if (code == WORLD_CODE) WORLD else byCountry[code]
+
+    fun hasData(code: String): Boolean = value(code) != null
+}}
+'''
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--input", help="JSON-ответ API Всемирного банка, сохранённый заранее")
@@ -112,7 +151,9 @@ def main():
             missing.append(code)
 
     year = max(years | {latest[WORLD_ID][0]})
-    OUTPUT_SWIFT.write_text(render(entries, round(latest[WORLD_ID][1], 1), year, missing), encoding="utf-8")
+    world = round(latest[WORLD_ID][1], 1)
+    OUTPUT_SWIFT.write_text(render(entries, world, year, missing), encoding="utf-8")
+    OUTPUT_KOTLIN.write_text(render_kotlin(entries, world, year, missing), encoding="utf-8")
     print(f"Готово: {len(entries)} стран, данные за {year} год, весь мир — {latest[WORLD_ID][1]:.1f}")
     if missing:
         print("Нет данных:", ", ".join(missing))

@@ -1,0 +1,331 @@
+{
+  "counters" : [
+    {
+      "createdAt" : "2025-09-12T09:00:00Z",
+      "emoji" : "❤️",
+      "id" : "9B42F570-AC92-44A3-AAF9-04D7604C538C",
+      "log" : [
+        "2025-09-22T09:00:00Z",
+        "2025-12-01T09:00:00Z",
+        "2026-02-19T09:00:00Z",
+        "2026-05-02T09:00:00Z",
+        "2026-07-15T09:00:00Z"
+      ],
+      "perYear" : 5,
+      "remindsWhenOverdue" : true,
+      "title" : "встреч с родителями",
+      "years" : 20
+    },
+    {
+      "createdAt" : "2026-03-31T09:00:00Z",
+      "emoji" : "📚",
+      "id" : "AE91D42D-4051-4F5A-809C-F15C4FC105C2",
+      "log" : [
+        "2026-04-09T09:00:00Z",
+        "2026-05-02T09:00:00Z",
+        "2026-05-30T09:00:00Z",
+        "2026-06-29T09:00:00Z",
+        "2026-07-24T09:00:00Z",
+        "2026-08-22T09:00:00Z",
+        "2026-09-17T09:00:00Z",
+        "2026-10-15T09:00:00Z"
+      ],
+      "perYear" : 12,
+      "remindsWhenOverdue" : true,
+      "title" : "прочитанных книг"
+    },
+    {
+      "createdAt" : "2025-12-21T09:00:00Z",
+      "emoji" : "🏖️",
+      "id" : "7F88CE45-C9D6-4385-BA6E-7B098E46CBDF",
+      "log" : [
+        "2025-12-31T09:00:00Z",
+        "2026-07-04T09:00:00Z",
+        "2026-09-19T09:00:00Z"
+      ],
+      "perYear" : 2,
+      "remindsWhenOverdue" : true,
+      "title" : "отпусков"
+    }
+  ],
+  "goals" : [
+    {
+      "category" : "travel",
+      "createdAt" : "2026-04-10T09:00:00Z",
+      "id" : "F985010A-A87C-4D21-B814-52A480EC2A1E",
+      "isFocused" : true,
+      "note" : "Мечтаю об этом с детства — пора перестать мечтать и поехать.",
+      "reflection" : "",
+      "steps" : [
+        {
+          "id" : "A2D92443-B3AB-4B3E-B75C-B758D3C11645",
+          "isDone" : true,
+          "title" : "Выбрать: Мурманск или Норвегия"
+        },
+        {
+          "id" : "4ABD0734-699D-46A8-AEB1-C5BE903D70D9",
+          "isDone" : false,
+          "title" : "Купить билеты на февраль"
+        },
+        {
+          "id" : "A3FC0E46-60CD-4AFF-A897-68EC0AA1799A",
+          "isDone" : false,
+          "title" : "Тёплые ботинки"
+        }
+      ],
+      "targetAge" : 36,
+      "title" : "Увидеть северное сияние"
+    },
+    {
+      "category" : "skills",
+      "createdAt" : "2026-04-20T09:00:00Z",
+      "id" : "B8E25B17-9921-4A1F-8EC2-E4DB6EA283CA",
+      "isFocused" : true,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+        {
+          "id" : "B190B1AD-1498-413B-9DB4-9D70C2FB3928",
+          "isDone" : true,
+          "title" : "Найти преподавателя"
+        },
+        {
+          "id" : "526C2EF7-56B1-4951-B3B5-978B6720D006",
+          "isDone" : true,
+          "title" : "Заниматься 3 раза в неделю"
+        },
+        {
+          "id" : "05FD9D72-C9A4-4F8C-9F53-1B0A96310E7B",
+          "isDone" : false,
+          "title" : "Посмотреть сериал без субтитров"
+        }
+      ],
+      "targetDate" : "2027-09-12T09:00:00Z",
+      "title" : "Выучить испанский до разговорного уровня"
+    },
+    {
+      "category" : "body",
+      "createdAt" : "2026-04-30T09:00:00Z",
+      "id" : "D57DF8CA-B841-4BF8-9632-A2E624044A20",
+      "isFocused" : true,
+      "note" : "Доказать себе, что могу.",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "targetAge" : 40,
+      "title" : "Пробежать марафон"
+    },
+    {
+      "category" : "travel",
+      "countryCode" : "JP",
+      "createdAt" : "2026-05-10T09:00:00Z",
+      "id" : "3BB8457A-7301-4C94-BDE4-83B5715B55DA",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "Япония"
+    },
+    {
+      "category" : "travel",
+      "countryCode" : "IS",
+      "createdAt" : "2026-05-20T09:00:00Z",
+      "id" : "2FD83CF4-53C4-4961-A7AB-17968C0D66AB",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "Исландия"
+    },
+    {
+      "category" : "movies",
+      "createdAt" : "2026-05-30T09:00:00Z",
+      "id" : "B1962891-19B8-41F1-B243-784483CE7151",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "«Сталкер» — Андрей Тарковский"
+    },
+    {
+      "category" : "books",
+      "createdAt" : "2026-06-09T09:00:00Z",
+      "id" : "7358C75A-65CE-486B-9FBE-32C84DEF5C2D",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "«Смерть Ивана Ильича» — Лев Толстой"
+    },
+    {
+      "category" : "people",
+      "createdAt" : "2026-06-19T09:00:00Z",
+      "id" : "B98688D0-F0D3-46AD-8DDF-8EA634DFBE4B",
+      "isFocused" : false,
+      "note" : "Пока есть кому рассказывать.",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "targetDate" : "2026-12-26T09:00:00Z",
+      "title" : "Записать историю жизни бабушки"
+    },
+    {
+      "category" : "create",
+      "createdAt" : "2026-06-29T09:00:00Z",
+      "id" : "378EC301-7E06-41B3-997D-629E741A65B5",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "targetAge" : 45,
+      "title" : "Написать книгу"
+    },
+    {
+      "category" : "experience",
+      "createdAt" : "2026-07-09T09:00:00Z",
+      "id" : "A62FD75C-DC81-4CB8-84EB-2DB41266D07A",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "Прыгнуть с парашютом"
+    },
+    {
+      "category" : "experience",
+      "completedAt" : "2026-09-19T09:00:00Z",
+      "createdAt" : "2026-04-05T09:00:00Z",
+      "id" : "8E8B10D0-B222-49C6-8ED4-73DC24AB9BAB",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "Эльбрус, 5:12 утра. Холодно и абсолютно счастливо.",
+      "steps" : [
+
+      ],
+      "title" : "Встретить рассвет в горах"
+    },
+    {
+      "category" : "travel",
+      "completedAt" : "2026-07-04T09:00:00Z",
+      "countryCode" : "GE",
+      "createdAt" : "2026-04-05T09:00:00Z",
+      "id" : "8A8C6C85-266D-432F-9E92-7350D2ECB973",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "Хачапури, горы и самые добрые люди.",
+      "steps" : [
+
+      ],
+      "title" : "Грузия"
+    },
+    {
+      "category" : "books",
+      "completedAt" : "2026-05-10T09:00:00Z",
+      "createdAt" : "2026-04-05T09:00:00Z",
+      "id" : "402AC62B-CAC2-4EED-8C11-003439CF8DC7",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "«Мастер и Маргарита» — Михаил Булгаков"
+    },
+    {
+      "category" : "skills",
+      "completedAt" : "2025-09-02T09:00:00Z",
+      "createdAt" : "2025-06-14T09:00:00Z",
+      "id" : "A1CE2DCC-E2C2-450F-8AC3-0150CDC40D12",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "Научиться плавать кролем"
+    },
+    {
+      "category" : "create",
+      "completedAt" : "2024-09-27T09:00:00Z",
+      "createdAt" : "2024-05-10T09:00:00Z",
+      "id" : "62E8CF0B-39DB-4733-8422-85D2B3FE4063",
+      "isFocused" : false,
+      "note" : "",
+      "reflection" : "",
+      "steps" : [
+
+      ],
+      "title" : "Посадить дерево"
+    }
+  ],
+  "letters" : [
+    {
+      "createdAt" : "2025-10-27T09:00:00Z",
+      "id" : "4654659B-C1D0-4250-A2EB-30F8B02B4534",
+      "openDate" : "2026-10-27T09:00:00Z",
+      "text" : "Привет! Если ты это читаешь — прошёл ровно год. Надеюсь, горы уже случились, а испанский больше не откладывается на понедельник. И позвони родителям — прямо сейчас."
+    },
+    {
+      "createdAt" : "2026-09-27T09:00:00Z",
+      "id" : "B80CE096-F3FC-4856-BE7F-B2EC494419AA",
+      "openAge" : 40,
+      "text" : "Сейчас мне 34. Хочется, чтобы к сорока книга была написана, а утро всё так же начиналось с радости."
+    },
+    {
+      "createdAt" : "2026-10-22T09:00:00Z",
+      "id" : "9583781D-4FA8-46D3-A465-7C4424E02FB2",
+      "openDate" : "2027-05-29T09:00:00Z",
+      "text" : "Только что вернулись с Эльбруса. Запомни это чувство: холод, рассвет и абсолютное счастье."
+    },
+    {
+      "createdAt" : "2025-09-22T09:00:00Z",
+      "id" : "5994F37E-4193-4A7E-871C-F98EFE94CAFC",
+      "openDate" : "2026-09-22T09:00:00Z",
+      "openedAt" : "2026-09-22T09:00:00Z",
+      "text" : "Год назад было страшно менять работу. Как оно там?"
+    }
+  ],
+  "profile" : {
+    "birthDate" : "1992-07-15T20:00:00Z",
+    "createdAt" : "2026-03-31T09:00:00Z",
+    "expectancyCountry" : "RU",
+    "expectancySource" : "country",
+    "lifeExpectancy" : 82
+  },
+  "reminders" : {
+    "deadlineAlerts" : true,
+    "frequency" : "weekly",
+    "hour" : 8,
+    "isEnabled" : true,
+    "minute" : 30,
+    "weekday" : 6
+  },
+  "version" : 1,
+  "visitedCountries" : [
+    "AE",
+    "AM",
+    "DE",
+    "ES",
+    "FR",
+    "GE",
+    "IT",
+    "KZ",
+    "ME",
+    "RU",
+    "TH",
+    "TR"
+  ]
+}
