@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Только в отладочной сборке: галерея настоящих виджетов на демо-данных — для скриншотов. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name="app.mementomori.debug.WidgetGalleryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MementoMori" />
+    </application>
+</manifest>
