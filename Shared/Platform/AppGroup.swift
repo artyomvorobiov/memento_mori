@@ -38,9 +38,10 @@ enum AppGroup {
 
     // MARK: - Определение группы
 
-    /// Кандидаты по порядку: группы из профиля подписи, группа от bundle id приложения, группа из шаблона.
+    /// Кандидаты по порядку: группы из подписи кода, из профиля подписи, группа от bundle id приложения, из шаблона.
     static var candidates: [String] {
-        var result = provisionedGroups()
+        var result = ownSignedGroups ?? []
+        result += provisionedGroups()
         result.append("group." + containingAppBundleID)
         result.append(templateIdentifier)
         var seen = Set<String>()
@@ -62,20 +63,34 @@ enum AppGroup {
         return String(bundleID[..<dot])
     }
 
-    /// Группы из профиля подписи виджета — приложение читает их из вложенного расширения.
-    /// nil — профиля нет (например, в симуляторе), проверить нельзя.
-    static var widgetProvisionedGroups: [String]? {
+    // MARK: - Диагностика
+
+    /// Группы из подписи кода этого процесса — есть в любой сборке, в том числе из TestFlight.
+    static let ownSignedGroups: [String]? = CodeSignature.appGroups(ofExecutableAt: Bundle.main.executableURL)
+
+    /// Группы этого процесса: из подписи, а если она не прочиталась — из профиля.
+    static var ownGroups: [String] { ownSignedGroups ?? provisionedGroups() }
+
+    /// Группы виджета — приложение читает подпись вложенного расширения. nil — проверить нельзя.
+    static var widgetGroups: [String]? {
         guard let plugins = Bundle.main.builtInPlugInsURL,
               let items = try? FileManager.default.contentsOfDirectory(at: plugins, includingPropertiesForKeys: nil),
               let appex = items.first(where: { $0.pathExtension == "appex" })
         else { return nil }
+        if let signed = CodeSignature.appGroups(ofExecutableAt: Bundle(url: appex)?.executableURL) {
+            return signed
+        }
         let profile = appex.appendingPathComponent("embedded.mobileprovision")
         guard FileManager.default.fileExists(atPath: profile.path) else { return nil }
         return provisionedGroups(at: profile)
     }
 
-    /// Группы из профиля подписи этого процесса (приложения или виджета).
-    static var ownProvisionedGroups: [String] { provisionedGroups() }
+    /// Группы приложения, если смотреть из виджета (расширение лежит внутри приложения). nil — не прочиталось.
+    static var containingAppGroups: [String]? {
+        guard Bundle.main.bundleURL.pathExtension == "appex" else { return ownGroups }
+        let appURL = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+        return CodeSignature.appGroups(ofExecutableAt: Bundle(url: appURL)?.executableURL)
+    }
 
     /// App Groups из встроенного профиля подписи (есть в сборках для своего iPhone).
     private static func provisionedGroups() -> [String] {

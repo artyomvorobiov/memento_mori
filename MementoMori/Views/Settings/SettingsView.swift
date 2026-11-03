@@ -174,13 +174,24 @@ struct SettingsView: View {
     private var widgetProblem: String? {
         let howTo = "В Xcode открой Signing & Capabilities → App Groups у таргетов MementoMori и MementoWidgetExtension и отметь в обоих одну и ту же группу. Подробнее — в README."
         guard AppGroup.isAvailable else {
-            return "Виджеты не видят данные: у приложения не подключена App Group. " + howTo
+            let signed = AppGroup.ownGroups
+            let found = signed.isEmpty ? "приложение подписано без App Group" : "группа в подписи (\(signed.joined(separator: ", "))) недоступна"
+            return "Виджеты не видят данные: \(found). " + howTo
         }
-        if let widgetGroups = AppGroup.widgetProvisionedGroups, !widgetGroups.contains(AppGroup.identifier) {
-            let found = widgetGroups.isEmpty ? "ни одной группы" : widgetGroups.joined(separator: ", ")
-            return "Виджеты не видят данные: у приложения группа «\(AppGroup.identifier)», а у виджета — \(found). " + howTo
+        if let widgetGroups = AppGroup.widgetGroups, !widgetGroups.contains(AppGroup.identifier) {
+            let found = widgetGroups.isEmpty ? "виджет подписан без App Group" : "у виджета — \(widgetGroups.joined(separator: ", "))"
+            return "Виджеты не видят данные: у приложения группа «\(AppGroup.identifier)», а \(found). " + howTo
         }
         return nil
+    }
+
+    /// Что показывает подпись: какие группы у приложения и у виджета.
+    private var signingDetails: String {
+        func list(_ groups: [String]?) -> String {
+            guard let groups else { return "не удалось прочитать" }
+            return groups.isEmpty ? "нет" : groups.joined(separator: ", ")
+        }
+        return "Подпись: приложение — \(list(AppGroup.ownSignedGroups)); виджет — \(list(AppGroup.widgetGroups))."
     }
 
     private var widgetsSection: some View {
@@ -201,6 +212,10 @@ struct SettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(Theme.secondaryText)
             }
+            Text(signingDetails)
+                .font(.caption2)
+                .foregroundStyle(Theme.tertiaryText)
+                .textSelection(.enabled)
         } header: {
             Text("Виджеты")
         }

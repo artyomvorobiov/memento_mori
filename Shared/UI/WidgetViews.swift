@@ -341,9 +341,11 @@ struct WidgetEmptyView: View {
         if AppGroup.isAvailable {
             return "Открой приложение, чтобы начать отсчёт"
         }
-        let groups = AppGroup.ownProvisionedGroups
-        let detail = groups.isEmpty ? "у виджета не включена ни одна группа" : "у виджета: " + groups.joined(separator: ", ")
-        return "Нет доступа к данным: \(detail). В Xcode у MementoWidgetExtension включи ту же App Group, что у приложения."
+        let widget = AppGroup.ownGroups
+        let app = AppGroup.containingAppGroups ?? []
+        let widgetText = widget.isEmpty ? "виджет подписан без App Group" : "у виджета группа " + widget.joined(separator: ", ")
+        let appText = app.isEmpty ? "" : ", у приложения — " + app.joined(separator: ", ")
+        return "Нет доступа к данным: \(widgetText)\(appText). Нужна одна и та же группа — см. «Частые проблемы» в README."
     }
 }
 
